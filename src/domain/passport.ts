@@ -228,9 +228,10 @@ export function createPassportVersion(
   state: ContinuityState,
   previousVersions: readonly PassportVersion[] = [],
   now = new Date(),
+  minimumVersion = 1,
 ): PassportVersion {
   const version =
-    Math.max(0, ...previousVersions.map((item) => item.version)) + 1;
+    Math.max(minimumVersion - 1, ...previousVersions.map((item) => item.version)) + 1;
   const passport = derivePassport(state);
   const publishedAt = now.toISOString();
   return {

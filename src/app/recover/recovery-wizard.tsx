@@ -1,194 +1,546 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { business, legacyContacts } from "@/domain/demo-data";
-import type { AttestationSnapshot, PrimaryWorkflow, ProductStatus } from "@/domain/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EvidenceBadge } from "@/components/evidence-badge";
-import { productStatusLabel } from "@/lib/format";
-import { writeAttestationSnapshot } from "@/lib/preferences";
+import { SourceEvidenceCard } from "@/components/source-evidence-card";
+import {
+  acceptResolution,
+  continuityFieldLabels,
+  editResolution,
+  groupClaimsByField,
+  latestHumanResolution,
+  leaveResolutionUnresolved,
+  rejectResolution,
+  reviewableContinuityFields,
+  stageResolutionProposal,
+  stageResolutionProposals,
+  summarizeContinuityState,
+  type ReviewableContinuityField,
+} from "@/domain/continuity";
+import {
+  continuitySources,
+  initialContinuityState,
+  recommendedResolutionProposals,
+} from "@/domain/continuity-demo";
+import { createIdempotencyKey } from "@/domain/inquiry";
+import { createPassportVersion, derivePassport } from "@/domain/passport";
+import type {
+  ActivityEntry,
+  ClaimResolution,
+  ContinuityState,
+  DestinationStatus,
+} from "@/domain/types";
+import { formatAttestedDate, productStatusLabel } from "@/lib/format";
+import {
+  loadContinuityState,
+  loadPassportVersions,
+  publishPassportVersion,
+  saveContinuityState,
+} from "@/lib/indexed-db";
 
-const steps = ["Identity", "Contacts", "Products", "Capabilities", "Workflow", "Review"];
+const destinationLabels: Record<DestinationStatus, string> = {
+  SUPPORTED: "Supported",
+  AVAILABLE_BY_INQUIRY: "Available by inquiry",
+  UNSUPPORTED: "Unsupported",
+  UNKNOWN: "Unknown",
+};
 
-const workflowOptions: { value: PrimaryWorkflow; label: string; description: string }[] = [
-  { value: "REQUEST_QUOTATION", label: "Request quotation", description: "Structured B2B pricing and fulfilment inquiry." },
-  { value: "REQUEST_SAMPLES", label: "Request samples", description: "Request evaluation units before a larger order." },
-  { value: "DISTRIBUTION_INQUIRY", label: "Distribution inquiry", description: "Explore a regional reseller or distribution relationship." },
-  { value: "PRODUCT_AVAILABILITY_INQUIRY", label: "Product availability inquiry", description: "Confirm supply for a particular market and period." },
-];
+function formatValue(field: ReviewableContinuityField, value: unknown) {
+  if (field === "instantCoffeeMoq" && typeof value === "number") {
+    return `${value.toLocaleString("en")} retail units`;
+  }
+  if (
+    field === "japanAvailability" &&
+    typeof value === "string" &&
+    value in destinationLabels
+  ) {
+    return destinationLabels[value as DestinationStatus];
+  }
+  return typeof value === "string" ? value : String(value ?? "Not stated");
+}
+
+function pendingProposal(state: ContinuityState, field: ReviewableContinuityField) {
+  return state.resolutions
+    .filter(
+      (resolution) =>
+        resolution.field === field && resolution.state === "AGENT_PROPOSED",
+    )
+    .sort((left, right) =>
+      (right.proposedAt ?? "").localeCompare(left.proposedAt ?? ""),
+    )[0];
+}
 
 export function RecoveryWizard() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [identity, setIdentity] = useState({
-    name: business.name,
-    description: business.description,
-    country: business.country,
-    sector: business.sector,
-  });
-  const [contactStates, setContactStates] = useState<
-    Record<string, "CURRENT" | "OUTDATED" | "UNKNOWN">
-  >({
-    [legacyContacts[0].value]: "OUTDATED",
-    [legacyContacts[1].value]: "CURRENT",
-    [legacyContacts[2].value]: "CURRENT",
-  });
-  const [productStates, setProductStates] = useState<Record<string, ProductStatus>>(
-    Object.fromEntries(business.products.map((product) => [product.id, product.status])),
+  const [continuity, setContinuity] = useState<ContinuityState>(
+    structuredClone(initialContinuityState),
   );
-  const [capabilities, setCapabilities] = useState({
-    b2bInquiries: true,
-    exports: true,
-    samples: true,
-    privateLabel: true,
-  });
-  const [marketsServed, setMarketsServed] = useState(
-    business.capabilities.marketsServed.join(", "),
+  const [hydrated, setHydrated] = useState(false);
+  const [persistence, setPersistence] = useState<"saving" | "saved" | "error">(
+    "saving",
   );
-  const [workflow, setWorkflow] = useState<PrimaryWorkflow>("REQUEST_QUOTATION");
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [announcement, setAnnouncement] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [nextVersion, setNextVersion] = useState(2);
 
-  function next() {
-    setStep((current) => Math.min(steps.length - 1, current + 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+  const claimsByField = useMemo(
+    () => groupClaimsByField(continuity.claims),
+    [continuity.claims],
+  );
+  const summary = useMemo(
+    () => summarizeContinuityState(continuity),
+    [continuity],
+  );
+  const passport = useMemo(() => derivePassport(continuity), [continuity]);
+  const sourceMap = useMemo(
+    () => new Map(continuity.sources.map((source) => [source.id, source])),
+    [continuity.sources],
+  );
 
-  function back() {
-    setStep((current) => Math.max(0, current - 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
+  const addActivity = useCallback(
+    (entry: Omit<ActivityEntry, "id" | "timestamp">) => {
+      setActivity((current) => [
+        {
+          ...entry,
+          id: createIdempotencyKey(),
+          timestamp: new Date().toISOString(),
+        },
+        ...current,
+      ].slice(0, 12));
+    },
+    [],
+  );
 
-  function publish() {
-    const snapshot: AttestationSnapshot = {
-      identity,
-      contactStates,
-      productStates,
-      capabilities,
-      marketsServed: marketsServed
-        .split(",")
-        .map((market) => market.trim())
-        .filter(Boolean),
-      workflow,
-      attestedAt: "2026-08-26",
+  useEffect(() => {
+    let cancelled = false;
+    async function restore() {
+      try {
+        const [stored, versions] = await Promise.all([
+          loadContinuityState(),
+          loadPassportVersions(),
+        ]);
+        if (cancelled) return;
+        setContinuity(stored ?? structuredClone(initialContinuityState));
+        setNextVersion(
+          Math.max(1, ...versions.map((version) => version.version)) + 1,
+        );
+        setPersistence(stored ? "saved" : "saving");
+      } catch {
+        if (!cancelled) setPersistence("error");
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    }
+    void restore();
+    return () => {
+      cancelled = true;
     };
-    writeAttestationSnapshot(snapshot, window.localStorage);
-    router.push("/business/rwenzori-harvest");
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const timer = window.setTimeout(() => {
+      setPersistence("saving");
+      void saveContinuityState(continuity)
+        .then(() => setPersistence("saved"))
+        .catch(() => setPersistence("error"));
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [continuity, hydrated]);
+
+  function updateContinuity(next: ContinuityState, message: string) {
+    setContinuity(next);
+    setActionError("");
+    setAnnouncement(message);
   }
 
-  const currentContacts = legacyContacts.filter(
-    (contact) => contactStates[contact.value] === "CURRENT",
-  );
-  const workflowLabel = workflowOptions.find(
-    (option) => option.value === workflow,
-  )?.label;
+  function stageField(field: ReviewableContinuityField) {
+    const recommendation = recommendedResolutionProposals.find(
+      (proposal) => proposal.field === field,
+    );
+    if (!recommendation || pendingProposal(continuity, field)) return;
+    try {
+      updateContinuity(
+        stageResolutionProposal(continuity, recommendation),
+        `${continuityFieldLabels[field]} proposal staged for human review.`,
+      );
+      addActivity({
+        tool: "Human demo control",
+        action: "proposed",
+        summary: `Suggested resolution staged for ${continuityFieldLabels[field]}.`,
+        readOnly: false,
+        approvalRequired: false,
+      });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not stage proposal.");
+    }
+  }
+
+  function stageAllRecommendations() {
+    const proposals = recommendedResolutionProposals.filter(
+      (proposal) => !pendingProposal(continuity, proposal.field),
+    );
+    if (proposals.length === 0) {
+      setAnnouncement("Every suggested resolution is already staged.");
+      return;
+    }
+    try {
+      updateContinuity(
+        stageResolutionProposals(continuity, proposals),
+        `${proposals.length} proposals staged. No proposal was accepted automatically.`,
+      );
+      addActivity({
+        tool: "Human demo control",
+        action: "proposed",
+        summary: `${proposals.length} suggested resolutions staged; human review required.`,
+        readOnly: false,
+        approvalRequired: false,
+      });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not stage proposals.");
+    }
+  }
+
+  function accept(proposal: ClaimResolution) {
+    try {
+      const next = acceptResolution(continuity, proposal.id);
+      const label = continuityFieldLabels[proposal.field];
+      updateContinuity(next, `${label} accepted by the human.`);
+      addActivity({
+        tool: label,
+        action: "accepted",
+        summary:
+          proposal.action === "EXCLUDE"
+            ? "Human accepted exclusion from the Passport."
+            : "Human accepted the staged proposal.",
+        readOnly: false,
+        approvalRequired: true,
+      });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not accept proposal.");
+    }
+  }
+
+  function startEdit(proposal: ClaimResolution) {
+    setEditingId(proposal.id);
+    setEditValue(
+      proposal.action === "USE_VALUE" && proposal.proposal !== undefined
+        ? String(proposal.proposal)
+        : "",
+    );
+    setActionError("");
+  }
+
+  function saveEdit(proposal: ClaimResolution) {
+    try {
+      const value =
+        proposal.field === "instantCoffeeMoq"
+          ? Number(editValue.replaceAll(",", ""))
+          : editValue.trim();
+      const next = editResolution(continuity, proposal.id, value);
+      const label = continuityFieldLabels[proposal.field];
+      updateContinuity(next, `${label} edited and accepted by the human.`);
+      setEditingId(null);
+      addActivity({
+        tool: label,
+        action: "edited",
+        summary: "Human supplied an authoritative edited value.",
+        readOnly: false,
+        approvalRequired: true,
+      });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not save the edit.");
+    }
+  }
+
+  function reject(proposal: ClaimResolution) {
+    try {
+      updateContinuity(
+        rejectResolution(continuity, proposal.id),
+        `${continuityFieldLabels[proposal.field]} proposal rejected.`,
+      );
+      addActivity({
+        tool: continuityFieldLabels[proposal.field],
+        action: "rejected",
+        summary: "Human rejected the staged proposal; nothing new became publishable.",
+        readOnly: false,
+        approvalRequired: true,
+      });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not reject proposal.");
+    }
+  }
+
+  function keepUnresolved(proposal: ClaimResolution) {
+    try {
+      updateContinuity(
+        leaveResolutionUnresolved(continuity, proposal.id),
+        `${continuityFieldLabels[proposal.field]} remains unresolved and excluded.`,
+      );
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not keep unresolved.");
+    }
+  }
+
+  async function publish() {
+    setPublishing(true);
+    setActionError("");
+    try {
+      const versions = await loadPassportVersions();
+      const version = createPassportVersion(continuity, versions, new Date(), 2);
+      await publishPassportVersion(continuity, version);
+      setContinuity((current) => ({
+        ...current,
+        publishedVersionId: version.id,
+        updatedAt: version.publishedAt,
+      }));
+      setNextVersion(version.version + 1);
+      setAnnouncement(`Passport version ${version.version} published by the human.`);
+      addActivity({
+        tool: `Passport v${version.version}`,
+        action: "published",
+        summary: "Human published an immutable snapshot of accepted facts.",
+        readOnly: false,
+        approvalRequired: true,
+      });
+      window.setTimeout(
+        () => router.push("/business/rwenzori-harvest"),
+        350,
+      );
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Passport publication failed.");
+      setPublishing(false);
+    }
+  }
 
   return (
-    <div className="shell recovery-shell">
-      <div className="page-intro recovery-intro">
-        <p className="eyebrow">Stage B · Recover</p>
-        <h1>Information Attestation</h1>
-        <p>Confirm individual facts as current. This is not identity, legal-status, or government-record verification.</p>
+    <div className="shell recovery-shell ledger-shell">
+      <div className="page-intro ledger-intro">
+        <div>
+          <p className="eyebrow">Stage B · Reconcile</p>
+          <h1>Continuity Ledger</h1>
+          <p>
+            A shared workspace where an agent can stage resolutions and a human
+            decides what is current enough to publish and act upon.
+          </p>
+        </div>
+        <div className="ledger-intro-actions">
+          <button className="button button-secondary" type="button" onClick={stageAllRecommendations}>
+            Stage suggested proposals
+          </button>
+          <small>{persistence === "saved" ? "Ledger saved on this device" : persistence === "error" ? "Local save failed" : "Saving ledger…"}</small>
+        </div>
       </div>
 
-      <nav className="wizard-progress" aria-label="Attestation progress">
-        <ol>
-          {steps.map((label, index) => (
-            <li key={label} className={index === step ? "current" : index < step ? "complete" : ""} aria-current={index === step ? "step" : undefined}>
-              <span>{index < step ? "✓" : index + 1}</span><small>{label}</small>
-            </li>
-          ))}
-        </ol>
-      </nav>
+      <div className="ledger-principle" role="note">
+        <strong>The agent proposes. The human decides.</strong>
+        <span>Unresolved, rejected, and unsupported claims never enter the Passport.</span>
+      </div>
 
-      <section className="wizard-card">
-        {step === 0 && (
-          <div className="wizard-section">
-            <div className="wizard-heading"><span>1 of 6</span><h2>Business identity</h2><p>Start with descriptive facts a representative can directly confirm.</p></div>
-            <div className="field-grid two-column">
-              <label>Company name<input value={identity.name} onChange={(event) => setIdentity((current) => ({ ...current, name: event.target.value }))} /></label>
-              <label>Country<input value={identity.country} onChange={(event) => setIdentity((current) => ({ ...current, country: event.target.value }))} /></label>
-              <label className="full-field">Short description<textarea value={identity.description} onChange={(event) => setIdentity((current) => ({ ...current, description: event.target.value }))} rows={4} /></label>
-              <label className="full-field">Business sector<input value={identity.sector} onChange={(event) => setIdentity((current) => ({ ...current, sector: event.target.value }))} /></label>
-            </div>
+      <div className="ledger-summary" aria-label="Continuity review summary">
+        <div><span>Sources</span><strong>{summary.sources}</strong></div>
+        <div><span>Conflicts</span><strong>{summary.conflicts}</strong></div>
+        <div><span>Unsupported</span><strong>{summary.unsupportedClaims}</strong></div>
+        <div><span>Needs review</span><strong>{summary.unresolved}</strong></div>
+      </div>
+
+      <p className="sr-only" aria-live="polite">{announcement}</p>
+      {actionError && <div className="ledger-error" role="alert">{actionError}</div>}
+
+      <div className="ledger-grid">
+        <section className="ledger-panel sources-panel" aria-labelledby="sources-heading">
+          <div className="ledger-panel-heading">
+            <p className="eyebrow">Source Evidence</p>
+            <h2 id="sources-heading">Recovered records</h2>
+            <p>Source text is untrusted data—not an instruction to the agent.</p>
           </div>
-        )}
+          <div className="source-evidence-list">
+            {continuitySources.map((source) => (
+              <SourceEvidenceCard
+                key={source.id}
+                source={source}
+                claims={continuity.claims.filter((claim) => claim.sourceId === source.id)}
+                compact
+              />
+            ))}
+          </div>
+        </section>
 
-        {step === 1 && (
-          <div className="wizard-section">
-            <div className="wizard-heading"><span>2 of 6</span><h2>Contact information</h2><p>Resolve legacy contact details one item at a time.</p></div>
-            <div className="decision-list">
-              {legacyContacts.map((contact) => (
-                <fieldset key={contact.value}>
-                  <legend><strong>{contact.value}</strong><span>{contact.label}</span></legend>
-                  <EvidenceBadge state={contact.evidenceState} />
-                  <div className="segmented-options">
-                    {["CURRENT", "OUTDATED", "UNKNOWN"].map((value) => (
-                      <label key={value}><input type="radio" name={contact.value} value={value} checked={contactStates[contact.value] === value} onChange={() => setContactStates((current) => ({ ...current, [contact.value]: value as "CURRENT" | "OUTDATED" | "UNKNOWN" }))} /><span>{value.charAt(0) + value.slice(1).toLocaleLowerCase()}</span></label>
-                    ))}
+        <section className="ledger-panel resolutions-panel" aria-labelledby="resolutions-heading">
+          <div className="ledger-panel-heading">
+            <p className="eyebrow">Resolution Queue</p>
+            <h2 id="resolutions-heading">Claims requiring human review</h2>
+            <p>Each agent proposal remains visibly separate from human authority.</p>
+          </div>
+          <div className="resolution-list">
+            {reviewableContinuityFields.map((field) => {
+              const candidates = claimsByField[field];
+              const proposal = pendingProposal(continuity, field);
+              const human = latestHumanResolution(continuity, field);
+              const candidateValues = new Set(
+                candidates.map((claim) => JSON.stringify(claim.value)),
+              ).size;
+              return (
+                <fieldset className="resolution-card" key={field}>
+                  <legend>{continuityFieldLabels[field]}</legend>
+                  <div className="resolution-status-row">
+                    <span className={`resolution-state ${human ? "human" : proposal ? "proposal" : "unresolved"}`}>
+                      {human
+                        ? human.action === "EXCLUDE"
+                          ? "Human accepted exclusion"
+                          : human.state === "HUMAN_EDITED"
+                            ? "Human edited"
+                            : "Human accepted"
+                        : proposal
+                          ? "Agent proposed"
+                          : field === "certification"
+                            ? "Unsupported legacy claim"
+                            : "Unresolved"}
+                    </span>
+                    <span>{candidateValues} candidate value{candidateValues === 1 ? "" : "s"}</span>
                   </div>
+
+                  <ul className="candidate-list">
+                    {candidates.map((candidate) => {
+                      const source = sourceMap.get(candidate.sourceId);
+                      return (
+                        <li key={candidate.id}>
+                          <div>
+                            <strong>{source?.title ?? "Unknown source"}</strong>
+                            <time dateTime={candidate.observedAt}>{formatAttestedDate(candidate.observedAt)}</time>
+                          </div>
+                          <p>{formatValue(field, candidate.value)}</p>
+                          <EvidenceBadge state={candidate.evidenceState} />
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {human && (
+                    <div className="human-resolution">
+                      <span>Accepted human decision</span>
+                      <strong>
+                        {human.action === "EXCLUDE"
+                          ? "Do not publish this claim"
+                          : formatValue(field, human.acceptedValue)}
+                      </strong>
+                    </div>
+                  )}
+
+                  {proposal ? (
+                    <div className="proposal-panel">
+                      <span>Agent proposal</span>
+                      <strong>
+                        {proposal.action === "EXCLUDE"
+                          ? "Do not publish as current"
+                          : formatValue(field, proposal.proposal)}
+                      </strong>
+                      <p id={`proposal-reason-${proposal.id}`}>{proposal.explanation}</p>
+
+                      {editingId === proposal.id ? (
+                        <div className="proposal-edit">
+                          <label htmlFor={`proposal-edit-${proposal.id}`}>
+                            {field === "certification" ? "Current certification information" : `Edit ${continuityFieldLabels[field]}`}
+                          </label>
+                          <input
+                            id={`proposal-edit-${proposal.id}`}
+                            type={field === "instantCoffeeMoq" ? "number" : "text"}
+                            min={field === "instantCoffeeMoq" ? 1 : undefined}
+                            value={editValue}
+                            onChange={(event) => setEditValue(event.target.value)}
+                          />
+                          <small>A fictional representative is marking this edited value as current.</small>
+                          <div className="resolution-actions">
+                            <button type="button" className="button button-primary" onClick={() => saveEdit(proposal)}>Save human edit</button>
+                            <button type="button" className="button button-quiet" onClick={() => setEditingId(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="resolution-actions" aria-describedby={`proposal-reason-${proposal.id}`}>
+                          <button type="button" className="button button-primary" onClick={() => accept(proposal)}>
+                            {proposal.action === "EXCLUDE" ? "Accept exclusion" : "Accept"}
+                          </button>
+                          <button type="button" className="button button-secondary" onClick={() => startEdit(proposal)}>
+                            {proposal.action === "EXCLUDE" ? "Add current information" : "Edit"}
+                          </button>
+                          <button type="button" className="button button-quiet" onClick={() => reject(proposal)}>Reject</button>
+                          <button type="button" className="text-button" onClick={() => keepUnresolved(proposal)}>Keep unresolved</button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button className="stage-field-button" type="button" onClick={() => stageField(field)}>
+                      Stage suggested resolution for {continuityFieldLabels[field]}
+                    </button>
+                  )}
                 </fieldset>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
+        </section>
 
-        {step === 2 && (
-          <div className="wizard-section">
-            <div className="wizard-heading"><span>3 of 6</span><h2>Current products</h2><p>Only products marked current or seasonal can appear on the continuity profile.</p></div>
-            <div className="product-decision-list">
-              {business.products.map((product) => (
-                <fieldset key={product.id}>
-                  <legend><strong>{product.name}</strong><span>{product.packaging} · MOQ {product.moq}</span></legend>
-                  <select aria-label={`${product.name} status`} value={productStates[product.id]} onChange={(event) => setProductStates((current) => ({ ...current, [product.id]: event.target.value as ProductStatus }))}>
-                    {(["CURRENTLY_AVAILABLE", "SEASONAL", "DISCONTINUED", "UNKNOWN"] as ProductStatus[]).map((status) => <option key={status} value={status}>{productStatusLabel(status)}</option>)}
-                  </select>
-                </fieldset>
-              ))}
-            </div>
+        <aside className="ledger-panel passport-panel" aria-labelledby="passport-preview-heading">
+          <div className="ledger-panel-heading">
+            <p className="eyebrow">Live Passport Preview</p>
+            <h2 id="passport-preview-heading">Accepted facts only</h2>
+            <p>This preview is derived from human resolutions, not the original website.</p>
           </div>
-        )}
-
-        {step === 3 && (
-          <div className="wizard-section">
-            <div className="wizard-heading"><span>4 of 6</span><h2>Business capabilities</h2><p>Confirm only services the business can currently support.</p></div>
-            <div className="capability-options">
-              {Object.entries({ b2bInquiries: "B2B inquiries", exports: "Export orders", samples: "Product samples", privateLabel: "Private-label supply" }).map(([key, label]) => (
-                <label key={key}><input type="checkbox" checked={capabilities[key as keyof typeof capabilities]} onChange={(event) => setCapabilities((current) => ({ ...current, [key]: event.target.checked }))} /><span aria-hidden="true" /><strong>{label}</strong></label>
+          <div className="passport-preview">
+            <span className="active-pill">Representative attested</span>
+            <h3>{passport.profile.name}</h3>
+            <p>{passport.profile.country} · {passport.profile.sector}</p>
+            <dl className="passport-field-list">
+              <div><dt>Trade email</dt><dd>{passport.profile.email || "Omitted"}</dd></div>
+              <div><dt>Trade phone</dt><dd>{passport.profile.phone || "Omitted — unresolved"}</dd></div>
+              <div><dt>Current offerings</dt><dd>{passport.profile.products.filter((product) => product.status === "CURRENTLY_AVAILABLE").length}</dd></div>
+              {passport.profile.products.map((product) => (
+                <div key={product.id}>
+                  <dt>{product.name}</dt>
+                  <dd>{productStatusLabel(product.status)} · MOQ {product.moq}</dd>
+                </div>
               ))}
-            </div>
-            <label className="markets-field">Markets currently served<input value={marketsServed} onChange={(event) => setMarketsServed(event.target.value)} /><small>Use specific regions or countries that can be supported now.</small></label>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div className="wizard-section">
-            <div className="wizard-heading"><span>5 of 6</span><h2>Choose one primary customer workflow</h2><p>A small, high-value tool is more dependable than exposing every possible website action.</p></div>
-            <div className="workflow-options">
-              {workflowOptions.map((option) => (
-                <label key={option.value} className={workflow === option.value ? "selected" : ""}><input type="radio" name="workflow" value={option.value} checked={workflow === option.value} onChange={() => setWorkflow(option.value)} /><span className="radio-mark" aria-hidden="true" /><span><strong>{option.label}</strong><small>{option.description}</small></span></label>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 5 && (
-          <div className="wizard-section review-section">
-            <div className="wizard-heading"><span>6 of 6</span><h2>Review before publishing</h2><p>This summary separates confirmed claims from unresolved legacy information.</p></div>
-            <div className="review-banner"><span aria-hidden="true">✓</span><div><strong>Ready to publish a continuity profile</strong><p>{business.products.filter((product) => productStates[product.id] === "CURRENTLY_AVAILABLE").length} products current · {Object.values(capabilities).filter(Boolean).length} capabilities confirmed · {workflowLabel} selected</p></div></div>
-            <dl className="review-list">
-              <div><dt>Business</dt><dd>{identity.name}<br />{identity.country} · {identity.sector}</dd></div>
-              <div><dt>Current contact</dt><dd>{currentContacts.map((contact) => <span key={contact.value}>{contact.value}<br /></span>)}</dd></div>
-              <div><dt>Evidence state</dt><dd><EvidenceBadge state="OWNER_CONFIRMED" /></dd></div>
-              <div><dt>Primary workflow</dt><dd>{workflowLabel}</dd></div>
+              <div><dt>Instant Coffee for Japan</dt><dd>{passport.destinationStatuses["instant-coffee-100g"]?.Japan ? destinationLabels[passport.destinationStatuses["instant-coffee-100g"].Japan] : "Omitted — unresolved"}</dd></div>
+              <div><dt>Certification</dt><dd>{passport.omittedFields.includes("certification") ? "No current claim published" : "Current human-attested information"}</dd></div>
             </dl>
-            <div className="attestation-note"><strong>What this attestation means</strong><p>A fictional demo representative has confirmed these information items as current on 26 August 2026. StillHere does not claim that an identity, legal entity, government record, or certification has been verified.</p></div>
+            <div className="passport-omissions">
+              <strong>{passport.omittedFields.length} field{passport.omittedFields.length === 1 ? "" : "s"} omitted</strong>
+              <p>{passport.omittedFields.length ? passport.omittedFields.map((field) => continuityFieldLabels[field]).join(" · ") : "Every review field has a human decision."}</p>
+            </div>
           </div>
-        )}
 
-        <div className="wizard-actions">
-          <button className="button button-quiet" type="button" onClick={back} disabled={step === 0}>Back</button>
-          {step < steps.length - 1 ? <button className="button button-primary" type="button" onClick={next}>Continue <span aria-hidden="true">→</span></button> : <button className="button button-primary" type="button" onClick={publish}>Publish demo profile <span aria-hidden="true">→</span></button>}
-        </div>
-      </section>
+          <div className="publish-bar">
+            <div>
+              <strong>Passport version {nextVersion}</strong>
+              <span>Publication is always a human action.</span>
+            </div>
+            <button className="button button-primary" type="button" onClick={() => void publish()} disabled={publishing || !hydrated}>
+              {publishing ? "Publishing…" : "Publish Business Passport"}
+            </button>
+          </div>
+
+          <details className="ledger-activity" open>
+            <summary>Agent &amp; human activity <span>{activity.length}</span></summary>
+            {activity.length === 0 ? (
+              <p>No proposals or decisions yet. The complete human workflow remains available.</p>
+            ) : (
+              <ol>
+                {activity.map((entry) => (
+                  <li key={entry.id}>
+                    <strong>{entry.tool}</strong>
+                    <span>{entry.summary}</span>
+                    <small>{entry.action.toLocaleUpperCase()}{entry.approvalRequired ? " · HUMAN AUTHORITY" : ""}</small>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </details>
+        </aside>
+      </div>
     </div>
   );
 }

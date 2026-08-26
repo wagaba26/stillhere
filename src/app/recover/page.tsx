@@ -4,8 +4,9 @@ import { SiteHeader } from "@/components/site-header";
 import { RecoveryWizard } from "./recovery-wizard";
 
 export const metadata: Metadata = {
-  title: "Information attestation",
-  description: "Recover and attest current business information.",
+  title: "Continuity Ledger",
+  description:
+    "Reconcile recovered business evidence through agent proposals and human decisions.",
 };
 
 export default function RecoverPage() {
