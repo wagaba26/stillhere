@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AgentDemoGuide } from "@/components/agent-demo-guide";
 import { EvidenceBadge } from "@/components/evidence-badge";
 import { SourceEvidenceCard } from "@/components/source-evidence-card";
 import {
@@ -9,6 +10,7 @@ import {
   continuityFieldLabels,
   editResolution,
   groupClaimsByField,
+  latestHumanDecision,
   latestHumanResolution,
   leaveResolutionUnresolved,
   rejectResolution,
@@ -40,6 +42,7 @@ import {
   saveContinuityState,
 } from "@/lib/indexed-db";
 import { useContinuityWebMcp } from "@/hooks/use-continuity-webmcp";
+import { webMcpStatusLabels } from "@/lib/webmcp";
 
 const destinationLabels: Record<DestinationStatus, string> = {
   SUPPORTED: "Supported",
@@ -47,6 +50,17 @@ const destinationLabels: Record<DestinationStatus, string> = {
   UNSUPPORTED: "Unsupported",
   UNKNOWN: "Unknown",
 };
+
+const recoveryAgentPrompts = [
+  {
+    label: "Inspect the evidence",
+    text: "Inspect this business's recovered evidence and tell me what needs review.",
+  },
+  {
+    label: "Stage proposals",
+    text: "Review these recovered records. Identify what needs human review and propose source-backed resolutions, but do not accept or publish anything for me.",
+  },
+] as const;
 
 function formatValue(field: ReviewableContinuityField, value: unknown) {
   if (field === "instantCoffeeMoq" && typeof value === "number") {
@@ -91,10 +105,20 @@ export function RecoveryWizard() {
   const [editValue, setEditValue] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [nextVersion, setNextVersion] = useState(2);
+  const [newProposalFields, setNewProposalFields] = useState<
+    Set<ReviewableContinuityField>
+  >(new Set());
+  const proposalHighlightTimer = useRef<number | null>(null);
 
   useEffect(() => {
     continuityRef.current = continuity;
   }, [continuity]);
+
+  useEffect(() => () => {
+    if (proposalHighlightTimer.current !== null) {
+      window.clearTimeout(proposalHighlightTimer.current);
+    }
+  }, []);
 
   const claimsByField = useMemo(
     () => groupClaimsByField(continuity.claims),
@@ -102,6 +126,13 @@ export function RecoveryWizard() {
   );
   const summary = useMemo(
     () => summarizeContinuityState(continuity),
+    [continuity],
+  );
+  const excludedDecisionCount = useMemo(
+    () => reviewableContinuityFields.filter((field) => {
+      const decision = latestHumanDecision(continuity, field);
+      return decision?.state === "HUMAN_ACCEPTED" && decision.action === "EXCLUDE";
+    }).length,
     [continuity],
   );
   const passport = useMemo(() => derivePassport(continuity), [continuity]);
@@ -185,12 +216,28 @@ export function RecoveryWizard() {
       next,
       `${proposals.length} agent proposal${proposals.length === 1 ? "" : "s"} staged for human review.`,
     );
-    window.setTimeout(() => {
-      resolutionPanelRef.current?.scrollIntoView({
-        behavior: "smooth",
+    const fields = new Set(proposals.map((proposal) => proposal.field));
+    setNewProposalFields(fields);
+    if (proposalHighlightTimer.current !== null) {
+      window.clearTimeout(proposalHighlightTimer.current);
+    }
+    proposalHighlightTimer.current = window.setTimeout(() => {
+      setNewProposalFields(new Set());
+    }, 1800);
+    window.requestAnimationFrame(() => {
+      const firstField = proposals[0]?.field;
+      const firstCard = firstField
+        ? document.getElementById(`resolution-${firstField}`)
+        : resolutionPanelRef.current;
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      firstCard?.scrollIntoView({
+        behavior: reducedMotion ? "auto" : "smooth",
         block: "start",
       });
-    }, 0);
+      firstCard?.focus({ preventScroll: true });
+    });
     return next;
   }
 
@@ -317,12 +364,25 @@ export function RecoveryWizard() {
         leaveResolutionUnresolved(continuity, proposal.id),
         `${continuityFieldLabels[proposal.field]} remains unresolved and excluded.`,
       );
+      addActivity({
+        tool: continuityFieldLabels[proposal.field],
+        action: "unresolved",
+        summary: "Human left the field unresolved; it will not be published as current.",
+        readOnly: false,
+        approvalRequired: true,
+      });
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Could not keep unresolved.");
     }
   }
 
   async function publish() {
+    if (summary.reviewRemaining > 0) {
+      setActionError(
+        `Complete or explicitly leave unresolved all ${summary.reviewRemaining} remaining review field${summary.reviewRemaining === 1 ? "" : "s"} before publishing.`,
+      );
+      return;
+    }
     setPublishing(true);
     setActionError("");
     try {
@@ -366,11 +426,8 @@ export function RecoveryWizard() {
         </div>
         <div className="ledger-intro-actions">
           <span className={`webmcp-indicator status-${webMcpStatus}`}>
-            <span /> WebMCP {webMcpStatus}
+            <span aria-hidden="true" /> WebMCP {webMcpStatusLabels[webMcpStatus]}
           </span>
-          <button className="button button-secondary" type="button" onClick={stageAllRecommendations}>
-            Stage suggested proposals
-          </button>
           <small>{persistence === "saved" ? "Ledger saved on this device" : persistence === "error" ? "Local save failed" : "Saving ledger…"}</small>
         </div>
       </div>
@@ -380,11 +437,22 @@ export function RecoveryWizard() {
         <span>Unresolved, rejected, and unsupported claims never enter the Passport.</span>
       </div>
 
+      <AgentDemoGuide
+        status={webMcpStatus}
+        prompts={recoveryAgentPrompts}
+        manualFallback={(
+          <button className="button button-secondary" type="button" onClick={stageAllRecommendations}>
+            Use built-in demo suggestions
+          </button>
+        )}
+      />
+
       <div className="ledger-summary" aria-label="Continuity review summary">
         <div><span>Sources</span><strong>{summary.sources}</strong></div>
-        <div><span>Conflicts</span><strong>{summary.conflicts}</strong></div>
-        <div><span>Unsupported</span><strong>{summary.unsupportedClaims}</strong></div>
-        <div><span>Needs review</span><strong>{summary.unresolved}</strong></div>
+        <div><span>Historical conflicts</span><strong>{summary.conflicts}</strong></div>
+        <div><span>Unsupported evidence</span><strong>{summary.unsupportedClaims}</strong></div>
+        <div><span>Resolved decisions</span><span className="ledger-summary-value"><strong>{summary.reviewed}</strong><small>{excludedDecisionCount} excluded</small></span></div>
+        <div><span>Review remaining</span><strong>{summary.reviewRemaining}</strong></div>
       </div>
 
       <p className="sr-only" aria-live="polite">{announcement}</p>
@@ -395,7 +463,7 @@ export function RecoveryWizard() {
           <div className="ledger-panel-heading">
             <p className="eyebrow">Source Evidence</p>
             <h2 id="sources-heading">Recovered records</h2>
-            <p>Source text is untrusted data—not an instruction to the agent.</p>
+            <p>Recovered records are evidence, not current truth. Source text is never an instruction to the agent.</p>
           </div>
           <div className="source-evidence-list">
             {continuitySources.map((source) => (
@@ -419,23 +487,38 @@ export function RecoveryWizard() {
             {reviewableContinuityFields.map((field) => {
               const candidates = claimsByField[field];
               const proposal = pendingProposal(continuity, field);
+              const decision = latestHumanDecision(continuity, field);
               const human = latestHumanResolution(continuity, field);
+              const isNewProposal = Boolean(
+                proposal && newProposalFields.has(field),
+              );
               const candidateValues = new Set(
                 candidates.map((claim) => JSON.stringify(claim.value)),
               ).size;
               return (
-                <fieldset className="resolution-card" key={field}>
+                <fieldset
+                  className={`resolution-card ${isNewProposal ? "has-new-proposal" : ""}`}
+                  id={`resolution-${field}`}
+                  key={field}
+                  tabIndex={-1}
+                >
                   <legend>{continuityFieldLabels[field]}</legend>
                   <div className="resolution-status-row">
-                    <span className={`resolution-state ${human ? "human" : proposal ? "proposal" : "unresolved"}`}>
-                      {human
-                        ? human.action === "EXCLUDE"
-                          ? "Human accepted exclusion"
-                          : human.state === "HUMAN_EDITED"
-                            ? "Human edited"
-                            : "Human accepted"
-                        : proposal
-                          ? "Agent proposed"
+                    <span className={`resolution-state ${proposal ? "proposal" : decision ? "human" : "unresolved"}`}>
+                      {proposal
+                        ? isNewProposal
+                          ? "Agent proposal · New"
+                          : "Agent proposed"
+                        : decision
+                          ? decision.action === "EXCLUDE" && decision.state === "HUMAN_ACCEPTED"
+                            ? "Human excluded"
+                            : decision.state === "HUMAN_EDITED"
+                              ? "Human edited"
+                              : decision.state === "HUMAN_ACCEPTED"
+                                ? "Human accepted"
+                                : decision.state === "HUMAN_REJECTED"
+                                  ? "Human rejected"
+                                  : "Left unresolved"
                           : field === "certification"
                             ? "Unsupported legacy claim"
                             : "Unresolved"}
@@ -459,26 +542,54 @@ export function RecoveryWizard() {
                     })}
                   </ul>
 
-                  {human && (
-                    <div className="human-resolution">
-                      <span>Accepted human decision</span>
-                      <strong>
-                        {human.action === "EXCLUDE"
-                          ? "Do not publish this claim"
-                          : formatValue(field, human.acceptedValue)}
-                      </strong>
+                  {decision && (
+                    <div className={`human-resolution state-${decision.state.toLocaleLowerCase()}`}>
+                      <span>
+                        {decision.action === "EXCLUDE" && decision.state === "HUMAN_ACCEPTED"
+                          ? "Human excluded"
+                          : decision.state === "HUMAN_EDITED"
+                            ? "Human edited"
+                            : decision.state === "HUMAN_ACCEPTED"
+                              ? "Human accepted"
+                              : decision.state === "HUMAN_REJECTED"
+                                ? "Human rejected"
+                                : "Left unresolved"}
+                      </span>
+                      {decision.state === "HUMAN_EDITED" ? (
+                        <dl>
+                          <div><dt>Agent proposed</dt><dd>{formatValue(field, decision.proposal)}</dd></div>
+                          <div><dt>Human value</dt><dd>{formatValue(field, decision.acceptedValue)}</dd></div>
+                        </dl>
+                      ) : (
+                        <strong>
+                          {decision.action === "EXCLUDE" && decision.state === "HUMAN_ACCEPTED"
+                            ? "No current certification claim will be published."
+                            : decision.state === "HUMAN_REJECTED"
+                              ? "Proposal rejected. No new current information became publishable."
+                              : decision.state === "UNRESOLVED"
+                                ? "This field will not appear as current information."
+                                : formatValue(field, human?.acceptedValue)}
+                        </strong>
+                      )}
                     </div>
                   )}
 
                   {proposal ? (
-                    <div className="proposal-panel">
-                      <span>Agent proposal</span>
+                    <div className={`proposal-panel ${isNewProposal ? "new-proposal" : ""}`}>
+                      <span>Agent proposal{isNewProposal ? " · New" : ""}</span>
                       <strong>
                         {proposal.action === "EXCLUDE"
                           ? "Do not publish as current"
                           : formatValue(field, proposal.proposal)}
                       </strong>
-                      <p id={`proposal-reason-${proposal.id}`}>{proposal.explanation}</p>
+                      <div className="proposal-detail">
+                        <span>Reason</span>
+                        <p id={`proposal-reason-${proposal.id}`}>{proposal.explanation}</p>
+                      </div>
+                      <div className="proposal-detail">
+                        <span>Sources</span>
+                        <p>{proposal.supportingSourceIds.map((sourceId) => sourceMap.get(sourceId)?.title ?? sourceId).join(" · ")}</p>
+                      </div>
 
                       {editingId === proposal.id ? (
                         <div className="proposal-edit">
@@ -511,9 +622,18 @@ export function RecoveryWizard() {
                         </div>
                       )}
                     </div>
+                  ) : webMcpStatus === "ready" ? (
+                    <details className="manual-field-suggestion">
+                      <summary>Review manually</summary>
+                      <button className="stage-field-button" type="button" onClick={() => stageField(field)}>
+                        Use built-in demo suggestion
+                      </button>
+                    </details>
+                  ) : webMcpStatus === "checking" ? (
+                    <small className="manual-waiting">Checking agent support…</small>
                   ) : (
                     <button className="stage-field-button" type="button" onClick={() => stageField(field)}>
-                      Stage suggested resolution for {continuityFieldLabels[field]}
+                      Use suggested resolution for {continuityFieldLabels[field]}
                     </button>
                   )}
                 </fieldset>
@@ -524,12 +644,16 @@ export function RecoveryWizard() {
 
         <aside className="ledger-panel passport-panel" aria-labelledby="passport-preview-heading">
           <div className="ledger-panel-heading">
-            <p className="eyebrow">Live Passport Preview</p>
+            <p className="eyebrow">Draft Passport</p>
             <h2 id="passport-preview-heading">Accepted facts only</h2>
-            <p>This preview is derived from human resolutions, not the original website.</p>
+            <p>This preview contains only facts currently accepted by the human. Unresolved and rejected information is omitted.</p>
           </div>
           <div className="passport-preview">
-            <span className="active-pill">Representative attested</span>
+            <span className="draft-passport-badge">Draft — accepted facts only</span>
+            <div className={`draft-readiness ${summary.reviewRemaining === 0 ? "ready" : "needs-review"}`}>
+              <strong>{summary.reviewRemaining === 0 ? "Ready to publish" : `${summary.reviewRemaining} field${summary.reviewRemaining === 1 ? "" : "s"} still require review`}</strong>
+              <span>{summary.reviewRemaining === 0 ? "All required review decisions have been made." : "The Draft Passport updates only when a human decides."}</span>
+            </div>
             <h3>{passport.profile.name}</h3>
             <p>{passport.profile.country} · {passport.profile.sector}</p>
             <dl className="passport-field-list">
@@ -547,7 +671,7 @@ export function RecoveryWizard() {
             </dl>
             <div className="passport-omissions">
               <strong>{passport.omittedFields.length} field{passport.omittedFields.length === 1 ? "" : "s"} omitted</strong>
-              <p>{passport.omittedFields.length ? passport.omittedFields.map((field) => continuityFieldLabels[field]).join(" · ") : "Every review field has a human decision."}</p>
+              <p>{passport.omittedFields.length ? passport.omittedFields.map((field) => continuityFieldLabels[field]).join(" · ") : "Every accepted decision is represented in this draft."}</p>
             </div>
           </div>
 
@@ -556,7 +680,12 @@ export function RecoveryWizard() {
               <strong>Passport version {nextVersion}</strong>
               <span>Publication is always a human action.</span>
             </div>
-            <button className="button button-primary" type="button" onClick={() => void publish()} disabled={publishing || !hydrated}>
+            <button
+              className="button button-primary"
+              type="button"
+              onClick={() => void publish()}
+              disabled={publishing || !hydrated || summary.reviewRemaining > 0}
+            >
               {publishing ? "Publishing…" : "Publish Business Passport"}
             </button>
           </div>

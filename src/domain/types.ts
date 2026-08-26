@@ -102,6 +102,7 @@ export interface ActivityEntry {
     | "accepted"
     | "edited"
     | "rejected"
+    | "unresolved"
     | "published";
   summary: string;
   timestamp: string;

@@ -194,7 +194,7 @@ export function AssessmentExperience() {
             {result.source === "SEEDED_DEMO" ? (
               <>
                 <Link className="button button-primary" href="/recover?demo=recovered">Review recovered evidence <span aria-hidden="true">→</span></Link>
-                <Link className="button button-secondary" href="/business/rwenzori-harvest">Skip to published demo profile</Link>
+                <Link className="button button-secondary" href="/business/rwenzori-harvest">View the current Passport profile</Link>
               </>
             ) : (
               <>

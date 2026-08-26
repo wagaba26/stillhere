@@ -181,7 +181,19 @@ export function latestHumanResolution(
   state: ContinuityState,
   field: ContinuityField,
 ) {
-  const latestDecision = state.resolutions
+  const latestDecision = latestHumanDecision(state, field);
+
+  return latestDecision?.state === "HUMAN_ACCEPTED" ||
+    latestDecision?.state === "HUMAN_EDITED"
+    ? latestDecision
+    : undefined;
+}
+
+export function latestHumanDecision(
+  state: ContinuityState,
+  field: ContinuityField,
+) {
+  return state.resolutions
     .filter(
       (resolution) =>
         resolution.field === field &&
@@ -191,16 +203,17 @@ export function latestHumanResolution(
     .sort((left, right) =>
       (right.resolvedAt ?? "").localeCompare(left.resolvedAt ?? ""),
     )[0];
-
-  return latestDecision?.state === "HUMAN_ACCEPTED" ||
-    latestDecision?.state === "HUMAN_EDITED"
-    ? latestDecision
-    : undefined;
 }
 
 export function getUnresolvedClaims(state: ContinuityState) {
   return reviewableContinuityFields.filter(
     (field) => !latestHumanResolution(state, field),
+  );
+}
+
+export function getFieldsNeedingReview(state: ContinuityState) {
+  return reviewableContinuityFields.filter(
+    (field) => !latestHumanDecision(state, field),
   );
 }
 
@@ -367,6 +380,7 @@ export function leaveResolutionUnresolved(
 
 export function summarizeContinuityState(state: ContinuityState) {
   const unresolvedFields = getUnresolvedClaims(state);
+  const fieldsNeedingReview = getFieldsNeedingReview(state);
   const representativeDates = state.sources
     .filter((source) => source.type === "REPRESENTATIVE")
     .map((source) => source.observedAt)
@@ -376,10 +390,12 @@ export function summarizeContinuityState(state: ContinuityState) {
     sources: state.sources.length,
     claims: state.claims.length,
     resolved: reviewableContinuityFields.length - unresolvedFields.length,
+    reviewed: reviewableContinuityFields.length - fieldsNeedingReview.length,
     conflicts: detectConflicts(state.claims).length,
     unresolved: unresolvedFields.length,
+    reviewRemaining: fieldsNeedingReview.length,
     unsupportedClaims: getUnsupportedClaims(state.claims).length,
-    needsReview: unresolvedFields,
+    needsReview: fieldsNeedingReview,
     lastRepresentativeAttestation: representativeDates[0] ?? null,
   };
 }

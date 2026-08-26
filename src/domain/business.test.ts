@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getBusinessStatus, searchCurrentOfferings } from "./business";
 
 describe("business continuity data", () => {
-  it("returns a compact owner-attested active status", () => {
+  it("returns a compact representative-attested active status", () => {
     const result = getBusinessStatus();
     expect(result).toMatchObject({
       status: "ACTIVE",

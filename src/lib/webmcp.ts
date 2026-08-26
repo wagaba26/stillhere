@@ -1,3 +1,12 @@
+export type WebMcpStatus = "checking" | "unsupported" | "ready" | "error";
+
+export const webMcpStatusLabels: Record<WebMcpStatus, string> = {
+  checking: "Checking",
+  unsupported: "Unsupported",
+  ready: "Ready",
+  error: "Error",
+};
+
 export function hasWebMcp(
   candidate: Pick<Document, "modelContext"> | undefined =
     typeof document === "undefined" ? undefined : document,

@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { AgentDemoGuide } from "@/components/agent-demo-guide";
 import { EvidenceBadge } from "@/components/evidence-badge";
 import { SiteFooter } from "@/components/site-footer";
 import { prePivotPassportVersion } from "@/domain/continuity-demo";
@@ -46,6 +47,7 @@ import {
   type ResourceMeasurement,
 } from "@/lib/preferences";
 import { inquiryAuthorityFingerprint } from "@/lib/passport-webmcp";
+import { webMcpStatusLabels } from "@/lib/webmcp";
 
 type SubmissionState =
   | "DRAFT SAVED ON THIS DEVICE"
@@ -76,11 +78,34 @@ const initialMeasurement: ResourceMeasurement = {
   measuredAt: "",
 };
 
+const passportAgentPrompts = [
+  {
+    label: "Find current products",
+    text: "Which current products from this business are suitable for a Japanese private-label buyer?",
+  },
+  {
+    label: "Prepare an inquiry",
+    text: "Prepare an inquiry for 5,000 units of Instant Coffee for Japan, requesting samples, private-label packaging and Japanese labelling support.",
+  },
+] as const;
+
+function scrollToElement(element: HTMLElement | null) {
+  if (!element) return;
+  const reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+  element.scrollIntoView({
+    behavior: reducedMotion ? "auto" : "smooth",
+    block: "start",
+  });
+}
+
 export function ProfileExperience() {
   const [draft, setDraft] = useState<InquiryDraft>(initialDraft);
   const draftRef = useRef(draft);
   const [hydratedDraft, setHydratedDraft] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [approvalNotice, setApprovalNotice] = useState("");
   const [approvalFingerprint, setApprovalFingerprint] = useState<string | null>(
     null,
   );
@@ -258,10 +283,17 @@ export function ProfileExperience() {
     approvalFingerprintRef.current = fingerprint;
     setApprovalFingerprint(fingerprint);
     setApproved(true);
+    setApprovalNotice("");
   }
 
   function updateField<K extends InquiryField>(field: K, value: InquiryDraft[K]) {
+    const approvalWasActive = Boolean(approvalFingerprintRef.current);
     revokeApproval();
+    if (approvalWasActive) {
+      setApprovalNotice(
+        "Approval revoked because the visible draft changed. Review and approve the new exact draft.",
+      );
+    }
     setReceipt(null);
     setSubmitError("");
     setSubmissionState("DRAFT SAVED ON THIS DEVICE");
@@ -305,7 +337,7 @@ export function ProfileExperience() {
       setDraftPersistence("error");
       throw error;
     }
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToElement(formRef.current);
     formRef.current?.querySelector<HTMLElement>("input, select, textarea")?.focus({
       preventScroll: true,
     });
@@ -461,7 +493,14 @@ export function ProfileExperience() {
             <p className="profile-category">Coffee producer &amp; exporter · Uganda</p>
             <h1>{profile.name}</h1>
             <div className="attested-line">
-              <span className="active-pill large"><span aria-hidden="true" /> Current information — representative attested</span>
+              <span className="passport-version-badge">
+                {passportSource === "published"
+                  ? `Published Passport v${passportVersion.version}`
+                  : passportSource === "legacy"
+                    ? `Compatibility Passport v${passportVersion.version}`
+                    : `Baseline Passport v${passportVersion.version}`}
+              </span>
+              <span className="active-pill large"><span aria-hidden="true" /> {passportSource === "published" ? "Representative-attested information" : "Accepted demo information"}</span>
               <span>{profile.status === "ACTIVE" ? "Representative reports business is operating" : "Operating status not attested"} · {passportSource === "published" ? "Published" : passportSource === "legacy" ? "Compatibility snapshot dated" : "Baseline dated"} {formatAttestedDate(passportVersion.publishedAt.slice(0, 10))}</span>
             </div>
             <p>{profile.description}</p>
@@ -476,16 +515,24 @@ export function ProfileExperience() {
         <section className="trust-strip">
           <div className="shell trust-grid">
             <div><small>Information state</small><EvidenceBadge state={profile.evidenceState} /></div>
-            <div><small>Business Passport</small><strong>Version {passportVersion.version}</strong></div>
-            <div><small>Agent support</small><strong>{webMcpStatus === "ready" ? "3 tools available" : webMcpStatus === "unsupported" ? "Human experience active" : "Checking WebMCP"}</strong></div>
+            <div><small>Passport source</small><strong>{passportSource === "published" ? `Published v${passportVersion.version}` : passportSource === "legacy" ? `Compatibility v${passportVersion.version}` : `Baseline v${passportVersion.version}`}</strong></div>
+            <div><small>Agent support</small><strong>{webMcpStatus === "ready" ? `${submitToolAvailable ? 4 : 3} tools available` : webMcpStatus === "unsupported" ? "Human experience active" : webMcpStatus === "error" ? "Manual workflow active" : "Checking WebMCP"}</strong></div>
             <div><small>Current offerings</small><strong>{currentProducts.length} listed</strong></div>
           </div>
         </section>
 
+        <div className="shell profile-agent-guide">
+          <AgentDemoGuide
+            status={webMcpStatus}
+            prompts={passportAgentPrompts}
+            compact
+          />
+        </div>
+
         <div className="shell profile-layout">
           <div className="profile-content">
             <section className="profile-section" aria-labelledby="products-heading">
-              <div className="profile-section-heading"><div><p className="eyebrow">Current catalogue</p><h2 id="products-heading">Products confirmed for inquiry</h2></div><p>Availability and destination details are reconfirmed during quotation.</p></div>
+              <div className="profile-section-heading"><div><p className="eyebrow">Current catalogue</p><h2 id="products-heading">Products available for inquiry</h2></div><p>Availability and destination details are reconfirmed during quotation.</p></div>
               <div className="product-list">
                 {currentProducts.map((product) => (
                   <article key={product.id} className="product-card">
@@ -497,7 +544,7 @@ export function ProfileExperience() {
                       <div><dt>Private label</dt><dd>{product.privateLabel ? "Available" : "Not offered"}</dd></div>
                       <div><dt>Evidence</dt><dd><EvidenceBadge state={product.evidenceState} /></dd></div>
                     </dl>
-                    <button type="button" className="product-inquire" onClick={() => { updateField("productId", product.id); formRef.current?.scrollIntoView({ behavior: "smooth" }); }}>Inquire about this product <span aria-hidden="true">→</span></button>
+                    <button type="button" className="product-inquire" onClick={() => { updateField("productId", product.id); scrollToElement(formRef.current); }}>Inquire about this product <span aria-hidden="true">→</span></button>
                   </article>
                 ))}
               </div>
@@ -514,7 +561,7 @@ export function ProfileExperience() {
             </section>
 
             <section className="profile-section inquiry-section" id="inquiry" aria-labelledby="inquiry-heading">
-              <div className="inquiry-heading-row"><div><p className="eyebrow">Primary workflow</p><h2 id="inquiry-heading">Request a quotation</h2><p>Prepare with an agent or complete manually. Nothing is sent without your explicit approval.</p></div><div className={`webmcp-indicator status-${webMcpStatus}`}><span aria-hidden="true" />WebMCP {webMcpStatus}</div></div>
+              <div className="inquiry-heading-row"><div><p className="eyebrow">Primary workflow</p><h2 id="inquiry-heading">Request a quotation</h2><p>Prepare with an agent or complete manually. Nothing is sent without your explicit approval.</p></div><div className={`webmcp-indicator status-${webMcpStatus}`}><span aria-hidden="true" />WebMCP {webMcpStatusLabels[webMcpStatus]}</div></div>
 
               {agentFields.size > 0 && (
                 <div className="agent-prepared-banner" role="status"><span aria-hidden="true">✦</span><div><strong>Prepared by your agent — review before sending.</strong><p>Highlighted values came from the agent. Your edits are authoritative and remove the highlight.</p></div></div>
@@ -534,6 +581,8 @@ export function ProfileExperience() {
                   </div>
                   <label className={`full-field ${agentFields.has("questions") ? "agent-updated" : ""}`}>Questions or requirements<textarea rows={5} value={draft.questions} onChange={(event) => updateField("questions", event.target.value)} placeholder="Delivery timing, packaging, labelling, documentation…" maxLength={1000} /></label>
                 </div>
+
+                {approvalNotice && <div className="approval-revoked" role="status">{approvalNotice}</div>}
 
                 <div className="approval-panel">
                   <label className={!validation.valid ? "disabled" : ""}><input type="checkbox" checked={approved} disabled={!validation.valid || submissionState === "SUBMITTED"} onChange={(event) => updateApproval(event.target.checked)} /><span className="approval-check" aria-hidden="true" /><span><strong>I have reviewed this inquiry and approve submission.</strong><small>Changing any field or Passport version revokes approval and removes the submit tool.</small></span></label>
@@ -569,7 +618,7 @@ export function ProfileExperience() {
               {activity.length === 0 ? <div className="empty-activity"><span aria-hidden="true">◇</span><p>No WebMCP calls yet. The human experience remains fully available.</p></div> : <ol className="activity-list">{activity.map((entry) => <li key={entry.id}><span className={`activity-dot action-${entry.action}`} aria-hidden="true" /><div><div><code>{entry.tool}</code><time dateTime={entry.timestamp}>{new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit" }).format(new Date(entry.timestamp))}</time></div><p>{entry.summary}</p><small>{entry.readOnly ? "Read-only" : "State-changing"}{entry.approvalRequired ? " · Human approval required" : ""}</small></div></li>)}</ol>}
             </details>
 
-            <section className="sidebar-card contact-card"><p className="eyebrow">Current contact</p><h2>Trade desk</h2>{profile.email && <a href={`mailto:${profile.email}`}>{profile.email}</a>}{profile.phone && <a href={`tel:${profile.phone.replaceAll(" ", "")}`}>{profile.phone}</a>}{!profile.phone && <small>Phone omitted until a human publishes a resolution.</small>}<small>Displayed contact items come from the published fictional Passport.</small></section>
+            <section className="sidebar-card contact-card"><p className="eyebrow">Current contact</p><h2>Trade desk</h2>{profile.email && <a href={`mailto:${profile.email}`}>{profile.email}</a>}{profile.phone && <a href={`tel:${profile.phone.replaceAll(" ", "")}`}>{profile.phone}</a>}{!profile.phone && <small>Phone omitted until a human publishes a resolution.</small>}<small>Displayed contact items come from the fictional Passport version shown on this page.</small></section>
           </aside>
         </div>
       </main>

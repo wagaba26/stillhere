@@ -51,7 +51,7 @@ export const business: BusinessProfile = {
       privateLabel: true,
       exportMarkets: ["Uganda", "Japan", "East Africa", "United Kingdom"],
       certifications:
-        "Product specifications are owner-confirmed demonstration data; buyer-required documentation is reviewed per order.",
+        "Product specifications are representative-attested demonstration data; buyer-required documentation is reviewed per order.",
       evidenceState: "OWNER_CONFIRMED",
       lastConfirmed: "2026-08-26",
     },

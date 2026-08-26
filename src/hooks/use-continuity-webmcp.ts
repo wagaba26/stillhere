@@ -4,13 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ResolutionProposalInput } from "@/domain/continuity";
 import type { ActivityEntry, ContinuityState } from "@/domain/types";
 import { createContinuityToolDefinitions } from "@/lib/continuity-webmcp";
-import { hasWebMcp } from "@/lib/webmcp";
-
-export type ContinuityWebMcpStatus =
-  | "checking"
-  | "unsupported"
-  | "ready"
-  | "error";
+import { hasWebMcp, type WebMcpStatus } from "@/lib/webmcp";
 
 interface UseContinuityWebMcpOptions {
   hydrated: boolean;
@@ -23,7 +17,7 @@ interface UseContinuityWebMcpOptions {
 
 export function useContinuityWebMcp(options: UseContinuityWebMcpOptions) {
   const callbacks = useRef(options);
-  const [status, setStatus] = useState<ContinuityWebMcpStatus>("checking");
+  const [status, setStatus] = useState<WebMcpStatus>("checking");
 
   useEffect(() => {
     callbacks.current = options;

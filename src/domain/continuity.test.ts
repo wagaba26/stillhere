@@ -3,9 +3,11 @@ import {
   acceptResolution,
   detectConflicts,
   editResolution,
+  getFieldsNeedingReview,
   getUnresolvedClaims,
   getUnsupportedClaims,
   groupClaimsByField,
+  latestHumanDecision,
   latestHumanResolution,
   leaveResolutionUnresolved,
   rejectResolution,
@@ -126,6 +128,10 @@ describe("Continuity Ledger domain", () => {
       "HUMAN_EDITED",
     );
     expect(latestHumanResolution(rejected, "japanAvailability")).toBeUndefined();
+    expect(latestHumanDecision(rejected, "japanAvailability")?.state).toBe(
+      "HUMAN_REJECTED",
+    );
+    expect(getFieldsNeedingReview(rejected)).not.toContain("japanAvailability");
 
     const laterProposal = stageResolutionProposal(
       rejected,
@@ -177,6 +183,10 @@ describe("Continuity Ledger domain", () => {
       new Date("2026-08-26T10:05:00.000Z"),
     );
     expect(latestHumanResolution(unresolved, "tradePhone")).toBeUndefined();
+    expect(latestHumanDecision(unresolved, "tradePhone")?.state).toBe(
+      "UNRESOLVED",
+    );
     expect(getUnresolvedClaims(unresolved)).toContain("tradePhone");
+    expect(getFieldsNeedingReview(unresolved)).not.toContain("tradePhone");
   });
 });

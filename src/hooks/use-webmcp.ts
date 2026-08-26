@@ -12,9 +12,7 @@ import {
   createSubmitToolDefinition,
 } from "@/lib/passport-webmcp";
 import { canOfferSubmitTool } from "@/lib/preferences";
-import { hasWebMcp } from "@/lib/webmcp";
-
-type WebMcpStatus = "checking" | "unsupported" | "ready" | "error";
+import { hasWebMcp, type WebMcpStatus } from "@/lib/webmcp";
 
 interface PrepareResult {
   draft: InquiryDraft;

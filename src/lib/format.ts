@@ -1,7 +1,7 @@
 import type { EvidenceState, ProductStatus } from "@/domain/types";
 
 const evidenceLabels: Record<EvidenceState, string> = {
-  OWNER_CONFIRMED: "Owner confirmed",
+  OWNER_CONFIRMED: "Representative attested",
   PUBLIC_EVIDENCE: "Public evidence",
   LEGACY_SOURCE: "Legacy source",
   CONFLICT: "Conflict",
