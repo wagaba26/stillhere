@@ -12,6 +12,18 @@ export function asToolInput(input: unknown): Record<string, unknown> {
   return input as Record<string, unknown>;
 }
 
+export function assertExactKeys(
+  input: Record<string, unknown>,
+  allowedKeys: readonly string[],
+  label = "Tool input",
+) {
+  const allowed = new Set(allowedKeys);
+  const unexpected = Object.keys(input).filter((key) => !allowed.has(key));
+  if (unexpected.length > 0) {
+    throw new TypeError(`${label} contains unsupported field: ${unexpected[0]}.`);
+  }
+}
+
 export function optionalString(
   input: Record<string, unknown>,
   key: string,

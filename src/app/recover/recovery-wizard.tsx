@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EvidenceBadge } from "@/components/evidence-badge";
 import { SourceEvidenceCard } from "@/components/source-evidence-card";
 import {
@@ -16,6 +16,7 @@ import {
   stageResolutionProposal,
   stageResolutionProposals,
   summarizeContinuityState,
+  type ResolutionProposalInput,
   type ReviewableContinuityField,
 } from "@/domain/continuity";
 import {
@@ -38,6 +39,7 @@ import {
   publishPassportVersion,
   saveContinuityState,
 } from "@/lib/indexed-db";
+import { useContinuityWebMcp } from "@/hooks/use-continuity-webmcp";
 
 const destinationLabels: Record<DestinationStatus, string> = {
   SUPPORTED: "Supported",
@@ -76,6 +78,9 @@ export function RecoveryWizard() {
   const [continuity, setContinuity] = useState<ContinuityState>(
     structuredClone(initialContinuityState),
   );
+  const continuityRef = useRef(continuity);
+  continuityRef.current = continuity;
+  const resolutionPanelRef = useRef<HTMLElement>(null);
   const [hydrated, setHydrated] = useState(false);
   const [persistence, setPersistence] = useState<"saving" | "saved" | "error">(
     "saving",
@@ -116,6 +121,13 @@ export function RecoveryWizard() {
     [],
   );
 
+  const webMcpStatus = useContinuityWebMcp({
+    hydrated,
+    getState: () => continuityRef.current,
+    onStage: stageAgentProposals,
+    addActivity,
+  });
+
   useEffect(() => {
     let cancelled = false;
     async function restore() {
@@ -125,7 +137,9 @@ export function RecoveryWizard() {
           loadPassportVersions(),
         ]);
         if (cancelled) return;
-        setContinuity(stored ?? structuredClone(initialContinuityState));
+        const restored = stored ?? structuredClone(initialContinuityState);
+        continuityRef.current = restored;
+        setContinuity(restored);
         setNextVersion(
           Math.max(1, ...versions.map((version) => version.version)) + 1,
         );
@@ -154,9 +168,27 @@ export function RecoveryWizard() {
   }, [continuity, hydrated]);
 
   function updateContinuity(next: ContinuityState, message: string) {
+    continuityRef.current = next;
     setContinuity(next);
     setActionError("");
     setAnnouncement(message);
+  }
+
+  function stageAgentProposals(
+    proposals: readonly ResolutionProposalInput[],
+  ) {
+    const next = stageResolutionProposals(continuityRef.current, proposals);
+    updateContinuity(
+      next,
+      `${proposals.length} agent proposal${proposals.length === 1 ? "" : "s"} staged for human review.`,
+    );
+    window.setTimeout(() => {
+      resolutionPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 0);
+    return next;
   }
 
   function stageField(field: ReviewableContinuityField) {
@@ -330,6 +362,9 @@ export function RecoveryWizard() {
           </p>
         </div>
         <div className="ledger-intro-actions">
+          <span className={`webmcp-indicator status-${webMcpStatus}`}>
+            <span /> WebMCP {webMcpStatus}
+          </span>
           <button className="button button-secondary" type="button" onClick={stageAllRecommendations}>
             Stage suggested proposals
           </button>
@@ -371,7 +406,7 @@ export function RecoveryWizard() {
           </div>
         </section>
 
-        <section className="ledger-panel resolutions-panel" aria-labelledby="resolutions-heading">
+        <section ref={resolutionPanelRef} className="ledger-panel resolutions-panel" aria-labelledby="resolutions-heading">
           <div className="ledger-panel-heading">
             <p className="eyebrow">Resolution Queue</p>
             <h2 id="resolutions-heading">Claims requiring human review</h2>

@@ -232,9 +232,7 @@ export function stageResolutionProposals(
   proposals: readonly ResolutionProposalInput[],
   now = new Date(),
 ) {
-  if (proposals.length === 0 || proposals.length > 6) {
-    throw new TypeError("Stage between 1 and 6 proposals at a time.");
-  }
+  validateResolutionProposals(state, proposals);
   return proposals.reduce(
     (current, proposal, index) =>
       stageResolutionProposal(
@@ -244,6 +242,16 @@ export function stageResolutionProposals(
       ),
     state,
   );
+}
+
+export function validateResolutionProposals(
+  state: ContinuityState,
+  proposals: readonly ResolutionProposalInput[],
+) {
+  if (proposals.length === 0 || proposals.length > 6) {
+    throw new TypeError("Stage between 1 and 6 proposals at a time.");
+  }
+  proposals.forEach((proposal) => assertProposal(state, proposal));
 }
 
 function findProposal(state: ContinuityState, resolutionId: string) {
