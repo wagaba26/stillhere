@@ -99,7 +99,7 @@ Next.js 16 App Router
 └─ POST /api/inquiries: process-local demo receipt ledger
 ```
 
-Read [architecture.md](docs/architecture.md), [webmcp.md](docs/webmcp.md), and [security.md](docs/security.md) for the exact data, authority, persistence, and threat boundaries.
+Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/continuity-ledger.md), [webmcp.md](docs/webmcp.md), and [security.md](docs/security.md) for the exact data, authority, persistence, and threat boundaries. The challenge rationale and implementation provenance are in [competition-positioning.md](docs/competition-positioning.md) and [preexisting-vs-pivot.md](docs/preexisting-vs-pivot.md).
 
 ## Screenshots
 
