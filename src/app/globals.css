@@ -218,9 +218,17 @@ h3 { font-size: 1.3rem; }
 .final-cta h2 { max-width: 740px; margin: 0; color: var(--forest); font-size: clamp(2rem, 4vw, 3.6rem); }
 
 .site-footer { border-top: 1px solid var(--line); padding-block: 3rem; background: #ebe9e1; }
-.footer-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 3rem; }
+.footer-grid { display: grid; grid-template-columns: .8fr 1.25fr 1fr; gap: 3rem; }
 .footer-grid strong { color: var(--forest); }
 .footer-grid p { margin: .4rem 0 0; color: var(--muted); font-size: .76rem; }
+.demo-reset { display: grid; justify-items: start; gap: .45rem; }
+.demo-reset > button, .demo-reset-confirm button { border: 0; padding: 0; background: transparent; color: var(--forest); font-size: .72rem; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.demo-reset small, .demo-reset-confirm span { color: var(--muted); font-size: .62rem; }
+.demo-reset-confirm { display: grid; gap: .55rem; }
+.demo-reset-confirm > div { display: flex; gap: .8rem; }
+.demo-reset-confirm button:first-child { color: var(--red); }
+.demo-reset button:disabled { cursor: wait; opacity: .6; }
+.demo-reset p[role="alert"] { color: var(--red); }
 .demo-disclosure { max-width: 660px; }
 
 /* Assessment */
@@ -594,6 +602,7 @@ html[data-low-data="true"] .business-mark,
 html[data-low-data="true"] .leaf-mark,
 html[data-low-data="true"] .continuity-visual { display: none; }
 html[data-low-data="true"] .business-hero { min-height: auto; grid-template-columns: 1fr; padding-block: 3.5rem; }
+html[data-low-data="true"] .hero { min-height: auto; grid-template-columns: 1fr; }
 html[data-low-data="true"] .profile-layout { padding-block: 3.5rem; }
 html[data-low-data="true"] * { animation: none !important; transition: none !important; backdrop-filter: none !important; }
 

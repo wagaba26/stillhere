@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
+import { PreferenceHydrator } from "@/components/preference-hydrator";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
       <body>
+        <PreferenceHydrator />
         <a className="skip-link" href="#main-content">Skip to main content</a>
         {children}
         <ServiceWorkerRegistration />

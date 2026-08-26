@@ -559,7 +559,7 @@ export function ProfileExperience() {
           <aside className="profile-sidebar" aria-label="Continuity profile diagnostics">
             <section className="sidebar-card footprint-card">
               <div className="sidebar-heading"><div><p className="eyebrow">Observed in this browser</p><h2>Data Footprint</h2></div><span className="leaf-mark" aria-hidden="true">↓</span></div>
-              <dl><div><dt>Transferred resources</dt><dd>{measurement.resources}</dd></div><div><dt>Observed transfer</dt><dd>{formatBytes(measurement.transferredBytes)}</dd></div><div><dt>Low-data mode</dt><dd>{lowData ? "On" : "Off"}</dd></div><div><dt>Cached / offline</dt><dd>{offlineProfileAvailable ? "Profile ready" : "Preparing"}</dd></div><div><dt>Draft state</dt><dd>{submissionState === "SUBMITTED" ? "Submitted" : draftPersistence === "saved" ? "Saved locally" : draftPersistence === "error" ? "Local save failed" : "Saving locally"}</dd></div></dl>
+              <dl><div><dt>Transferred resources</dt><dd>{measurement.resources}</dd></div><div><dt>Observed transfer</dt><dd>{formatBytes(measurement.transferredBytes)}</dd></div><div><dt>Low-data mode</dt><dd>{lowData ? "On" : "Off"}</dd></div><div><dt>Cached / offline</dt><dd>{offlineProfileAvailable ? "Profile shell cached" : "Preparing"}</dd></div><div><dt>Draft state</dt><dd>{submissionState === "SUBMITTED" ? "Submitted" : draftPersistence === "saved" ? "Saved locally" : draftPersistence === "error" ? "Local save failed" : "Saving locally"}</dd></div></dl>
               <p className="measurement-note">Transfer values come from the browser Resource Timing API for this visit. A zero value can mean a cached resource or unavailable transfer detail; it is not an invented benchmark.</p>
             </section>
 

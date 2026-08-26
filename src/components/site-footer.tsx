@@ -1,3 +1,5 @@
+import { DemoResetControl } from "@/components/demo-reset-control";
+
 export function SiteFooter() {
   return (
     <footer className="site-footer">
@@ -11,6 +13,7 @@ export function SiteFooter() {
           demonstration data. No identity, legal status, or certification claim is
           made about a real business.
         </p>
+        <DemoResetControl />
       </div>
     </footer>
   );

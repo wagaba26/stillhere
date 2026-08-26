@@ -1,6 +1,8 @@
-const CACHE_NAME = "stillhere-shell-v1";
+const CACHE_NAME = "stillhere-shell-v2";
 const PROFILE_PATH = "/business/rwenzori-harvest";
-const PRECACHE_PATHS = [PROFILE_PATH, "/offline", "/manifest.webmanifest", "/icon.svg"];
+const CONTINUITY_PATH = "/recover";
+const OFFLINE_DOCUMENTS = [PROFILE_PATH, CONTINUITY_PATH, "/offline"];
+const PRECACHE_PATHS = [...OFFLINE_DOCUMENTS, "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -56,16 +58,16 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then(async (response) => {
-          if (response.ok && [PROFILE_PATH, "/offline"].includes(url.pathname)) {
+          if (response.ok && OFFLINE_DOCUMENTS.includes(url.pathname)) {
             const cache = await caches.open(CACHE_NAME);
             await cache.put(url.pathname, response.clone());
           }
           return response;
         })
         .catch(async () => {
-          if (url.pathname === PROFILE_PATH) {
-            const profile = await caches.match(PROFILE_PATH);
-            if (profile) return profile;
+          if (OFFLINE_DOCUMENTS.includes(url.pathname)) {
+            const cachedDocument = await caches.match(url.pathname);
+            if (cachedDocument) return cachedDocument;
           }
           return (await caches.match("/offline")) || Response.error();
         }),
