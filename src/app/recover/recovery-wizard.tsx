@@ -79,7 +79,6 @@ export function RecoveryWizard() {
     structuredClone(initialContinuityState),
   );
   const continuityRef = useRef(continuity);
-  continuityRef.current = continuity;
   const resolutionPanelRef = useRef<HTMLElement>(null);
   const [hydrated, setHydrated] = useState(false);
   const [persistence, setPersistence] = useState<"saving" | "saved" | "error">(
@@ -92,6 +91,10 @@ export function RecoveryWizard() {
   const [editValue, setEditValue] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [nextVersion, setNextVersion] = useState(2);
+
+  useEffect(() => {
+    continuityRef.current = continuity;
+  }, [continuity]);
 
   const claimsByField = useMemo(
     () => groupClaimsByField(continuity.claims),

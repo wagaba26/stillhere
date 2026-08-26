@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { clearDemoContinuityState } from "@/lib/indexed-db";
 import { clearAttestationSnapshot } from "@/lib/preferences";
 
 export function DemoResetControl() {
+  const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [error, setError] = useState("");
@@ -15,7 +17,8 @@ export function DemoResetControl() {
     try {
       await clearDemoContinuityState();
       clearAttestationSnapshot(window.localStorage);
-      window.location.assign("/assessment");
+      router.replace("/assessment");
+      router.refresh();
     } catch {
       setResetting(false);
       setError("Reset could not finish. Your existing demo data was left in place.");

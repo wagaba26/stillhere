@@ -23,8 +23,11 @@ interface UseContinuityWebMcpOptions {
 
 export function useContinuityWebMcp(options: UseContinuityWebMcpOptions) {
   const callbacks = useRef(options);
-  callbacks.current = options;
   const [status, setStatus] = useState<ContinuityWebMcpStatus>("checking");
+
+  useEffect(() => {
+    callbacks.current = options;
+  }, [options]);
 
   useEffect(() => {
     if (!options.hydrated) return;

@@ -45,9 +45,12 @@ interface UsePassportWebMcpOptions {
 
 export function usePassportWebMcp(options: UsePassportWebMcpOptions) {
   const callbacks = useRef(options);
-  callbacks.current = options;
   const [status, setStatus] = useState<WebMcpStatus>("checking");
   const [submitToolAvailable, setSubmitToolAvailable] = useState(false);
+
+  useEffect(() => {
+    callbacks.current = options;
+  }, [options]);
 
   useEffect(() => {
     if (!options.hydrated) return;
