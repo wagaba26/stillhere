@@ -1,5 +1,15 @@
 import { stableReference, validateInquiry } from "@/domain/inquiry";
-import type { InquiryDraft, InquiryReceipt } from "@/domain/types";
+import { business } from "@/domain/demo-data";
+import type { BusinessProfile, InquiryDraft, InquiryReceipt } from "@/domain/types";
+
+const demoReceiptAuthority: BusinessProfile = {
+  ...business,
+  products: business.products.map((product) =>
+    product.id === "instant-coffee-100g"
+      ? { ...product, status: "CURRENTLY_AVAILABLE" }
+      : product,
+  ),
+};
 
 const accepted = new Map<
   string,
@@ -55,7 +65,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const validation = validateInquiry(draft);
+  // The public challenge endpoint issues fictional receipts only. This seeded
+  // authority mirrors the reconciled Instant Coffee currentness used by the
+  // Passport demo; destination and exact-approval authority remain enforced in
+  // the visible browser workflow and are not claimed as server authorization.
+  const validation = validateInquiry(draft, demoReceiptAuthority);
   if (!validation.valid) {
     return Response.json(
       { error: "Inquiry validation failed.", fields: Object.keys(validation.errors) },
