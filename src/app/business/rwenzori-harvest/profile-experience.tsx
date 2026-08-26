@@ -29,7 +29,7 @@ import {
   isOfferingPublishable,
   legacyAttestationToPassportVersion,
 } from "@/domain/passport";
-import { useWebMcp } from "@/hooks/use-webmcp";
+import { usePassportWebMcp } from "@/hooks/use-webmcp";
 import { formatAttestedDate, formatBytes, productStatusLabel } from "@/lib/format";
 import {
   loadDraft,
@@ -45,6 +45,7 @@ import {
   writeLowDataPreference,
   type ResourceMeasurement,
 } from "@/lib/preferences";
+import { inquiryAuthorityFingerprint } from "@/lib/passport-webmcp";
 
 type SubmissionState =
   | "DRAFT SAVED ON THIS DEVICE"
@@ -80,6 +81,10 @@ export function ProfileExperience() {
   const draftRef = useRef(draft);
   const [hydratedDraft, setHydratedDraft] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [approvalFingerprint, setApprovalFingerprint] = useState<string | null>(
+    null,
+  );
+  const approvalFingerprintRef = useRef<string | null>(null);
   const [agentFields, setAgentFields] = useState<Set<InquiryField>>(new Set());
   const [submissionState, setSubmissionState] =
     useState<SubmissionState>("DRAFT SAVED ON THIS DEVICE");
@@ -108,10 +113,10 @@ export function ProfileExperience() {
     () => validateInquiry(draft, passport),
     [draft, passport],
   );
-
-  useEffect(() => {
-    draftRef.current = draft;
-  }, [draft]);
+  const currentFingerprint = useMemo(
+    () => inquiryAuthorityFingerprint(draft, passportVersion.id),
+    [draft, passportVersion.id],
+  );
 
   const addActivity = useCallback(
     (entry: Omit<ActivityEntry, "id" | "timestamp">) => {
@@ -133,12 +138,16 @@ export function ProfileExperience() {
       try {
         const stored = await loadDraft();
         if (!cancelled) {
-          setDraft(stored ?? emptyInquiry());
+          const restored = stored ?? emptyInquiry();
+          draftRef.current = restored;
+          setDraft(restored);
           setDraftPersistence(stored ? "saved" : "saving");
         }
       } catch {
         if (!cancelled) {
-          setDraft(emptyInquiry());
+          const restored = emptyInquiry();
+          draftRef.current = restored;
+          setDraft(restored);
           setDraftPersistence("error");
         }
       } finally {
@@ -158,12 +167,14 @@ export function ProfileExperience() {
         const stored = await loadPublishedPassport();
         if (cancelled) return;
         if (stored) {
+          revokeApproval();
           setPassportVersion(stored);
           setPassportSource("published");
           return;
         }
         const legacy = readAttestationSnapshot(window.localStorage);
         if (legacy) {
+          revokeApproval();
           setPassportVersion(legacyAttestationToPassportVersion(legacy, business));
           setPassportSource("legacy");
         }
@@ -229,8 +240,28 @@ export function ProfileExperience() {
     );
   }
 
-  function updateField<K extends InquiryField>(field: K, value: InquiryDraft[K]) {
+  function revokeApproval() {
+    approvalFingerprintRef.current = null;
+    setApprovalFingerprint(null);
     setApproved(false);
+  }
+
+  function updateApproval(checked: boolean) {
+    if (!checked) {
+      revokeApproval();
+      return;
+    }
+    const fingerprint = inquiryAuthorityFingerprint(
+      draftRef.current,
+      passportVersion.id,
+    );
+    approvalFingerprintRef.current = fingerprint;
+    setApprovalFingerprint(fingerprint);
+    setApproved(true);
+  }
+
+  function updateField<K extends InquiryField>(field: K, value: InquiryDraft[K]) {
+    revokeApproval();
     setReceipt(null);
     setSubmitError("");
     setSubmissionState("DRAFT SAVED ON THIS DEVICE");
@@ -240,7 +271,8 @@ export function ProfileExperience() {
       next.delete(field);
       return next;
     });
-    setDraft((current) => ({
+    const current = draftRef.current;
+    const next = {
       ...current,
       [field]: value,
       idempotencyKey:
@@ -248,7 +280,9 @@ export function ProfileExperience() {
           ? createIdempotencyKey()
           : current.idempotencyKey,
       updatedAt: new Date().toISOString(),
-    }));
+    };
+    draftRef.current = next;
+    setDraft(next);
   }
 
   async function handleAgentPrepare(
@@ -256,7 +290,7 @@ export function ProfileExperience() {
     fields: InquiryField[],
   ) {
     const prepared = prepareInquiry(values, draftRef.current, passport);
-    setApproved(false);
+    revokeApproval();
     setReceipt(null);
     setSubmitError("");
     setSubmissionState("DRAFT SAVED ON THIS DEVICE");
@@ -287,7 +321,16 @@ export function ProfileExperience() {
   async function performSubmit() {
     const current = draftRef.current;
     const checked = validateInquiry(current, passport);
-    if (!approved || !checked.valid) {
+    const exactFingerprint = inquiryAuthorityFingerprint(
+      current,
+      passportVersion.id,
+    );
+    if (
+      !approved ||
+      !checked.valid ||
+      !approvalFingerprintRef.current ||
+      approvalFingerprintRef.current !== exactFingerprint
+    ) {
       throw new Error("Review approval and all required fields are needed.");
     }
 
@@ -297,7 +340,7 @@ export function ProfileExperience() {
     if (previousReceipt) {
       setReceipt(previousReceipt);
       setSubmissionState("SUBMITTED");
-      setApproved(false);
+      revokeApproval();
       return { ...previousReceipt, duplicate: true };
     }
 
@@ -334,7 +377,7 @@ export function ProfileExperience() {
       }
       setReceipt(payload.receipt);
       setSubmissionState("SUBMITTED");
-      setApproved(false);
+      revokeApproval();
       try {
         await saveReceipt(payload.receipt);
       } catch {
@@ -360,10 +403,13 @@ export function ProfileExperience() {
     }
   }
 
-  const { status: webMcpStatus, submitToolAvailable } = useWebMcp({
+  const { status: webMcpStatus, submitToolAvailable } = usePassportWebMcp({
+    hydrated: hydratedPassport && hydratedDraft,
     approved,
     valid: validation.valid,
-    profile,
+    approvalFingerprint,
+    currentFingerprint,
+    passportVersion,
     onPrepare: handleAgentPrepare,
     onSubmit: performSubmit,
     addActivity,
@@ -490,7 +536,7 @@ export function ProfileExperience() {
                 </div>
 
                 <div className="approval-panel">
-                  <label className={!validation.valid ? "disabled" : ""}><input type="checkbox" checked={approved} disabled={!validation.valid || submissionState === "SUBMITTED"} onChange={(event) => setApproved(event.target.checked)} /><span className="approval-check" aria-hidden="true" /><span><strong>I have reviewed this inquiry and approve submission.</strong><small>Changing any field revokes approval and removes the submit tool.</small></span></label>
+                  <label className={!validation.valid ? "disabled" : ""}><input type="checkbox" checked={approved} disabled={!validation.valid || submissionState === "SUBMITTED"} onChange={(event) => updateApproval(event.target.checked)} /><span className="approval-check" aria-hidden="true" /><span><strong>I have reviewed this inquiry and approve submission.</strong><small>Changing any field or Passport version revokes approval and removes the submit tool.</small></span></label>
                   <div className="tool-lifecycle"><span className={submitToolAvailable ? "available" : "locked"} aria-hidden="true">{submitToolAvailable ? "✓" : "×"}</span><div><strong>submit_approved_inquiry</strong><small>{submitToolAvailable ? "Available to your agent" : "Locked until the form is valid and approved"}</small></div></div>
                 </div>
 

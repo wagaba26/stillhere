@@ -32,7 +32,10 @@ export function optionalString(
   const value = input[key];
   if (value === undefined || value === null || value === "") return undefined;
   if (typeof value !== "string") throw new TypeError(`${key} must be a string.`);
-  return value.trim().slice(0, maxLength);
+  if (value.length > maxLength) {
+    throw new TypeError(`${key} must be at most ${maxLength} characters.`);
+  }
+  return value.trim();
 }
 
 export function requiredString(
