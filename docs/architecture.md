@@ -28,12 +28,12 @@ The public-URL assessment and the seeded continuity demo are deliberately separa
 | Assessment boundary | `src/app/api/assessments/route.ts`, `src/lib/safe-site-fetch.ts`, `src/domain/assessment.ts` | Bounded JSON request, public-only pinned network connection, one HTML response, and conservative page signals |
 | Source and Ledger domain | `src/domain/types.ts`, `src/domain/continuity-demo.ts`, `src/domain/continuity.ts` | Evidence sources, claims, conflict/unsupported detection, proposals, human resolutions, and summaries |
 | Passport domain | `src/domain/passport.ts` | Accepted-facts-only projection, destination qualification, search, v1 compatibility conversion, and version creation |
-| Ledger UI/WebMCP | `src/app/recover/recovery-wizard.tsx`, `src/hooks/use-continuity-webmcp.ts`, `src/lib/continuity-webmcp.ts` | Visible evidence and resolution queue, two hydrated route tools, human decisions, live preview, and publication |
-| Passport UI/WebMCP | `src/app/business/rwenzori-harvest/profile-experience.tsx`, `src/hooks/use-webmcp.ts`, `src/lib/passport-webmcp.ts` | Hydrated Passport, published catalogue, visible inquiry, three base tools, fingerprinted approval, and conditional submit |
+| Ledger UI/WebMCP | `src/app/recover/recovery-wizard.tsx`, `src/components/agent-demo-guide.tsx`, `src/hooks/use-continuity-webmcp.ts`, `src/lib/continuity-webmcp.ts` | Agent-first instruction surface, compact evidence, visible proposal/decision queue, Draft Passport, two hydrated route tools, and human publication |
+| Passport UI/WebMCP | `src/app/business/rwenzori-harvest/profile-experience.tsx`, `src/components/agent-demo-guide.tsx`, `src/hooks/use-webmcp.ts`, `src/lib/passport-webmcp.ts` | Published-version identity, copyable agent prompts, catalogue, visible inquiry, three base tools, fingerprinted approval, and conditional submit |
 | Persistence | `src/lib/indexed-db.ts`, `src/lib/preferences.ts` | IndexedDB v2 Ledger/Passport/draft/receipt state plus Low Data and legacy-attestation compatibility keys |
 | Offline/global preferences | `public/sw.js`, `src/components/service-worker-registration.tsx`, `src/components/preference-hydrator.tsx` | Shell caching, navigation fallback, static-asset caching, and root Low Data hydration |
 | Scoped demo reset | `src/components/demo-reset-control.tsx` | Two-step deletion of demo device state while preserving Low Data and browser caches |
-| Demo receipt API | `src/app/api/inquiries/route.ts` | Seeded validation, payload-bound process-local idempotency, and fictional receipt response |
+| Demo receipt API | `src/app/api/inquiries/route.ts` | Seeded fictional receipt authority aligned with reconciled Instant Coffee currentness, payload-bound process-local idempotency, and fictional response |
 
 ## Route map
 
@@ -41,8 +41,8 @@ The public-URL assessment and the seeded continuity demo are deliberately separa
 | --- | --- |
 | `/` | Product thesis and Recover → Reconcile → Approve → Publish → Transact story |
 | `/assessment` | Seeded challenge result or bounded observation of one supplied public HTML page |
-| `/recover` | Source Evidence, Continuity Ledger, two WebMCP tools, human resolution queue, live Passport preview, and device-local publication |
-| `/business/rwenzori-harvest` | Hydrated Passport version, three base tools, conditional submit tool, local draft, activity, footprint, and offline status |
+| `/recover` | Compact Source Evidence, agent-first guide, Continuity Ledger, two WebMCP tools, visible proposal/human states, Draft Passport, and device-local publication |
+| `/business/rwenzori-harvest` | Clearly identified Passport source/version, agent prompt guide, three base tools, conditional submit tool, local draft, activity, footprint, and offline status |
 | `/offline` | Generic cached-navigation fallback with a link to the Passport route |
 | `/api/assessments` | Same-origin JSON endpoint for seeded or bounded public-page observation |
 | `/api/inquiries` | Process-local fictional receipt endpoint |
@@ -141,7 +141,7 @@ The authority fingerprint includes the Passport version ID, every visible inquir
 
 The client checks published product status, destination qualification (`SUPPORTED` or `AVAILABLE_BY_INQUIRY`), and private-label availability. A human edit removes the field's agent highlight, clears the receipt/error state, and revokes approval. Editing a submitted or pending draft also generates a new idempotency key.
 
-The server route does not receive the Passport version/fingerprint; it revalidates against seeded demo product rules. This is a documented demo boundary, not end-to-end Passport authorization.
+The server route does not receive the Passport version/fingerprint. It revalidates against a seeded fictional receipt authority that mirrors the reconciled Instant Coffee currentness so the exact challenge script can complete, but it does not revalidate Passport destination qualification or approval. This is a documented demo boundary, not end-to-end Passport authorization.
 
 ## Six WebMCP tools and lifecycle
 

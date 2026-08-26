@@ -114,7 +114,7 @@ Important limits:
 - the `Map` is process-local, resets on restart, and is not shared across instances;
 - the 20 KB check relies on declared `Content-Length`, not a streamed hard cap;
 - after JSON parsing, the route casts the body to `InquiryDraft` and does not run a complete structural schema before domain validation; production must reject missing/wrong-typed fields without allowing type-assuming code to fail;
-- the route validates against seeded demo products and does not receive/revalidate the published Passport version, destination matrix, or browser approval fingerprint;
+- the route validates against a seeded fictional receipt authority aligned with the reconciled Instant Coffee currentness and does not receive/revalidate the published Passport version, destination matrix, or browser approval fingerprint;
 - no inquiry body/receipt is durably stored server-side;
 - no external recipient is contacted.
 

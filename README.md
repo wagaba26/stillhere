@@ -99,11 +99,19 @@ Next.js 16 App Router
 └─ POST /api/inquiries: process-local demo receipt ledger
 ```
 
-Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/continuity-ledger.md), [webmcp.md](docs/webmcp.md), and [security.md](docs/security.md) for the exact data, authority, persistence, and threat boundaries. The challenge rationale and implementation provenance are in [competition-positioning.md](docs/competition-positioning.md) and [preexisting-vs-pivot.md](docs/preexisting-vs-pivot.md).
+Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/continuity-ledger.md), [webmcp.md](docs/webmcp.md), [WebMCP agent evaluations](docs/webmcp-evals.md), and [security.md](docs/security.md) for the exact data, authority, persistence, evaluation, and threat boundaries. The challenge rationale and implementation provenance are in [competition-positioning.md](docs/competition-positioning.md) and [preexisting-vs-pivot.md](docs/preexisting-vs-pivot.md).
 
 ## Screenshots
 
-> Submission placeholder: add the deployed Source Evidence result, Continuity Ledger proposal/human-decision state, Passport v2 profile, and exact-draft submit lifecycle after the final demo recording is frozen.
+### Agent proposal and human decision state
+
+![Continuity Ledger with source evidence, visible human decisions, and a ready Draft Passport](docs/screenshots/continuity-ledger-reviewed.png)
+
+### Published Business Passport
+
+![Published Business Passport hero with representative-attested status and agent guidance](docs/screenshots/business-passport.png)
+
+The same release was verified at a 360-pixel viewport: [Continuity Ledger](docs/screenshots/continuity-ledger-mobile.png) and [Business Passport](docs/screenshots/business-passport-mobile.png).
 
 ## Run locally
 
@@ -133,17 +141,17 @@ Use ChatGPT's in-app browser, identified as WebMCP-capable by the [challenge FAQ
 1. In Chrome, open `chrome://flags/#enable-webmcp-testing`, enable the flag, and relaunch as described in [Chrome's setup](https://developer.chrome.com/docs/ai/webmcp#get-started).
 2. Open `http://localhost:3000/assessment` and assess the prefilled fictional URL.
 3. Select **Review recovered evidence** to open `/recover`.
-4. Confirm **WebMCP ready**. Ask: **“Inspect the recovered business truth.”** Expect `inspect_business_truth`.
+4. Confirm **WebMCP Ready**. Use the visible copy-prompt guide to ask: **“Inspect this business's recovered evidence and tell me what needs review.”** Expect `inspect_business_truth`.
 5. Ask the agent to call `stage_claim_resolutions` with these source-backed proposals:
    - `tradePhone`: `USE_VALUE`, `+256 780 240 826`, sources `representative-2026` and `public-evidence-2026`;
    - `instantCoffeeMoq`: `USE_VALUE`, `2500`, source `representative-2026`;
    - `japanAvailability`: `USE_VALUE`, `AVAILABLE_BY_INQUIRY`, source `representative-2026`;
    - `certification`: `EXCLUDE`, sources `legacy-website-2021` and `representative-2026`.
-6. Confirm the proposals appear visibly and nothing is accepted automatically. As the human, accept or edit the first three and accept the certification exclusion.
+6. Confirm the proposals arrive with a visible **Agent proposal · New** state and nothing is accepted automatically. As the human, accept the phone, edit the MOQ from 2,500 to 3,000, accept Japan as **Available by inquiry**, and accept the certification exclusion.
 7. Select **Publish Business Passport**. Confirm the profile shows Passport version 2 or later.
 8. Ask: **“Read the published Business Passport and find current private-label offerings for Japan.”** Expect `get_business_passport` and `search_current_offerings`. The reconciled Instant Coffee result is qualified **available by inquiry**, not silently upgraded to supported.
-9. Ask: **“Prepare an inquiry for 2,000 units of drip-coffee-10pack to Japan, requesting samples and private-label packaging. Leave buyer identity fields blank.”** Expect `prepare_business_inquiry`; the visible form changes, three buyer fields remain for the human, and nothing submits.
-10. Enter fictional buyer details, edit any prepared value, and check the approval control. Confirm `submit_approved_inquiry` appears.
+9. Ask: **“Prepare an inquiry for 5,000 units of Instant Coffee for Japan, requesting samples, private-label packaging and Japanese labelling support.”** Expect `prepare_business_inquiry`; the visible form changes, three buyer fields remain for the human, and nothing submits.
+10. Enter fictional buyer details, change quantity from 5,000 to 6,000, and check the approval control. Confirm `submit_approved_inquiry` appears.
 11. Clear approval or edit a field and confirm the tool is removed. Reapprove the exact draft, ask the agent to submit, and confirm the visible `SH-...` demo receipt.
 
 The complete recording script is in [docs/demo-script.md](docs/demo-script.md).
@@ -177,7 +185,7 @@ Or run all checks:
 npm run check
 ```
 
-The verified final snapshot is **12 test files and 80 passing tests**. Coverage includes assessment parsing and SSRF boundaries, claim conflict/resolution precedence, Passport derivation and safe fallbacks, six tool definitions and strict parsing, retained-executor revocation, inquiry authority and idempotency, IndexedDB v1→v2 migration/atomic publication/scoped reset, and global preference compatibility.
+The verified polish snapshot is **14 test files and 86 passing tests**. Coverage includes assessment parsing and SSRF boundaries, claim conflict/resolution precedence, Passport derivation and safe fallbacks, six tool definitions and strict parsing, retained-executor revocation, the structured agent-evaluation fixture, the exact Instant Coffee receipt journey, inquiry idempotency, IndexedDB v1→v2 migration/atomic publication/scoped reset, and global preference compatibility.
 
 Automated tests do not replace a WebMCP-capable browser pass, offline navigation test, or probabilistic agent evaluation.
 
@@ -189,7 +197,7 @@ Automated tests do not replace a WebMCP-capable browser pass, offline navigation
 - Ledger/Passport/draft/receipt state is device-local IndexedDB. The legacy compatibility snapshot and Low Data preference use `localStorage`.
 - Published Passport versions are immutable application snapshots on that device, not signed public credentials or server records.
 - The inquiry API stores keys and receipts in a process-local `Map`. It binds a key to a SHA-256 hash of the reviewed payload for same-process retries, but state resets on restart and is not shared across instances.
-- The inquiry route does not persist the Passport version or deliver externally. Its server validation uses seeded demo product rules; Passport/destination authority and exact-version approval are enforced in the browser in this build.
+- The inquiry route does not persist the Passport version or deliver externally. Its server validation uses a seeded fictional receipt authority aligned with the reconciled Instant Coffee currentness; Passport destination qualification and exact-version approval are enforced in the browser in this build.
 - The inquiry route's 20 KB check trusts declared `Content-Length`; production needs an edge/parser hard limit, durable idempotency, abuse controls, authenticated authority, and a real delivery status model.
 - Assessment throttles and concurrency caps are also process-local.
 - Browser cache and IndexedDB can be cleared or evicted; offline-first use is not supported.

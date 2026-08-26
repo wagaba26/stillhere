@@ -36,7 +36,7 @@ Each route creates an `AbortController` and passes its signal to every base regi
 - **Route:** `/recover`
 - **Annotation:** `readOnlyHint: true`
 - **Input:** exact empty object; unexpected keys are rejected
-- **Output:** business name plus source, resolved, conflict, unresolved, unsupported-claim counts, fields needing review, and latest representative-attestation date
+- **Output:** business name plus source, accepted-resolution, reviewed-decision, conflict, unresolved/omitted, review-remaining, unsupported-claim counts, fields needing review, and latest representative-attestation date
 - **Privacy/scope:** derives the business name from the current accepted-facts Passport preview, but never returns recovered source documents or raw source text
 
 The tool reads the latest Ledger through a ref and adds a metadata-only activity entry.
@@ -191,7 +191,7 @@ sequenceDiagram
 ### Ledger route
 
 1. Open `/assessment`, assess the seeded fictional URL, and select **Review recovered evidence**.
-2. On `/recover`, wait for **WebMCP ready**.
+2. On `/recover`, wait for **WebMCP Ready** and use the visible copy-prompt guide.
 3. Confirm discovery shows `inspect_business_truth` and `stage_claim_resolutions`, not Passport tools.
 4. Ask: **“Inspect the recovered business truth.”** Expect four sources, three conflicts, four fields needing review, and one unsupported claim in the seeded initial state.
 5. Call `stage_claim_resolutions` with the four exact source-backed proposals listed in the README/demo script.
@@ -204,7 +204,7 @@ sequenceDiagram
 1. Confirm the route displays the published version and three base tools.
 2. Call `get_business_passport` and verify the returned version equals the visible version.
 3. Search `instant` with destination `Japan` and private label required; after the recommended v2 resolutions, expect Instant Coffee with `destinationStatus: "AVAILABLE_BY_INQUIRY"`.
-4. Call `prepare_business_inquiry` for `drip-coffee-10pack`, quantity `2000`, destination `Japan`, samples/private label true, leaving buyer identity fields absent.
+4. Call `prepare_business_inquiry` for `instant-coffee-100g`, quantity `5000`, destination `Japan`, samples/private label true, requesting Japanese labelling support and leaving buyer identity fields absent.
 5. Confirm the visible draft updates, missing buyer fields remain, and submission is absent.
 6. Enter fictional buyer company/name/email and check approval. Confirm the submit tool appears.
 7. Change any field and confirm approval clears and the submit tool is removed.
@@ -222,9 +222,9 @@ Where supported, DevTools can inspect the current route names:
 npm test
 ```
 
-Final verified snapshot: **12 test files, 80 passing tests**.
+Verified polish snapshot: **14 test files, 86 passing tests**.
 
-The suite covers Ledger and Passport tool contracts, schema/runtime mismatches, invalid source/value proposals, human-authority preservation, Passport-qualified search/preparation, retained submit executor rejection, feature detection, domain rules, persistence migration/publication/reset, and API/assessment boundaries. It does not simulate a production browser agent, so the manual lifecycle test and probabilistic prompts still matter. Chrome's [WebMCP eval guidance](https://developer.chrome.com/docs/ai/webmcp/evals) recommends both deterministic tests and agent evaluations.
+The suite covers Ledger and Passport tool contracts, schema/runtime mismatches, invalid source/value proposals, human-authority preservation, Passport-qualified search/preparation, retained submit executor rejection, feature detection, the structured prompt fixture, the exact Instant Coffee receipt flow, domain rules, persistence migration/publication/reset, and API/assessment boundaries. It does not simulate a production browser agent, so the manual lifecycle test and probabilistic prompts in [webmcp-evals.md](webmcp-evals.md) still matter. Chrome's [WebMCP eval guidance](https://developer.chrome.com/docs/ai/webmcp/evals) recommends both deterministic tests and agent evaluations.
 
 ## Constraints
 

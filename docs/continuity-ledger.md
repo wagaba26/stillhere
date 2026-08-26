@@ -51,7 +51,7 @@ Stable offerings and private-label capability provide agreement cases so the Led
 
 ## Publication
 
-The live preview always derives from the current Ledger. The public profile continues to show the last explicitly published version until a human selects **Publish Business Passport**.
+The live preview is explicitly labelled **Draft Passport — accepted facts only** and always derives from the current Ledger. It reports review remaining, publish readiness, and omitted fields. The public profile continues to show the last explicitly published version until a human selects **Publish Business Passport**; the profile then identifies that exact published version and date.
 
 Publication uses one IndexedDB transaction across `passportVersions` and `continuity`, storing both the snapshot and its `publishedVersionId` pointer. Historical versions contain snapshots rather than references to mutable resolution state.
 
@@ -76,6 +76,8 @@ While `/recover` is mounted and hydrated:
 - `stage_claim_resolutions` appends validated `AGENT_PROPOSED` records; it cannot resolve or publish.
 
 Schemas guide the browser agent, while strict runtime parsers independently reject extra keys, invented fields or values, invalid action/value pairs, unknown or unrelated source IDs, duplicate fields, and human-only metadata.
+
+When WebMCP is ready, the primary UI is a copyable instruction surface for the browser agent and the built-in demo suggestions move behind a secondary disclosure. Checking, unsupported, and registration-error states are explicit; unsupported/error states keep the complete manual suggestion flow visible. Successful agent staging highlights the new proposal cards briefly, scrolls to the first result, and announces the change through `aria-live`, with animation and smooth scrolling disabled for reduced-motion users.
 
 ## Scope
 

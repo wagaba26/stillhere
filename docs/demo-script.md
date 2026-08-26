@@ -7,7 +7,7 @@ This script demonstrates all six route-scoped WebMCP tools while keeping every a
 1. Use the deployed HTTPS app or a WebMCP-enabled local Chrome build.
 2. In the footer, select **Reset demo**, then **Confirm reset**. This clears device demo Ledger/Passport/draft/receipts but preserves Low Data and caches.
 3. If Low Data was previously on, turn it off from the Passport route before recording; reset intentionally preserves the preference.
-4. Confirm `npm run check` passes. The final snapshot is 12 test files and 80 tests.
+4. Confirm `npm run check` passes. The polish snapshot is 14 test files and 86 tests.
 5. Use only the fictional buyer values below.
 
 ## 0:00–0:18 — Problem and differentiation
@@ -32,11 +32,11 @@ Point briefly to the stale-site result and the four **Recovered Evidence** cards
 
 ## 0:38–1:20 — Agent proposes; human decides
 
-On `/recover`, show **Source Evidence**, **Continuity Ledger**, the live accepted-facts preview, and the two route tools.
+On `/recover`, show the **Agent assistance available** panel, compact **Source Evidence**, the **Continuity Ledger**, the Draft Passport, and the two route tools.
 
 Ask:
 
-> “Inspect the recovered business truth.”
+> “Inspect this business's recovered evidence and tell me what needs review.”
 
 Expected: `inspect_business_truth` returns bounded counts, four review fields, and no raw source documents.
 
@@ -76,11 +76,11 @@ Then ask the agent to call `stage_claim_resolutions` with:
 }
 ```
 
-Say:
+Point to the brief **Agent proposal · New** highlight and say:
 
 > “The agent staged proposals; it accepted and published nothing.”
 
-As the human, select **Accept** for phone, MOQ, and Japan qualification, then **Accept exclusion** for certification. Point to the live preview and say:
+As the human, select **Accept** for phone, **Edit** the MOQ from `2,500` to `3,000`, accept Japan qualification, then **Accept exclusion** for certification. Point to the Draft Passport's **Ready to publish** state and say:
 
 > “Unresolved or rejected facts are omitted. Available by inquiry is not upgraded to supported.”
 
@@ -90,9 +90,13 @@ Select **Publish Business Passport**.
 
 On the profile, point to **Business Passport Version 2** (or a later version if the device has retained history) and three available tools.
 
-Ask:
+Use the copyable Passport guide and ask:
 
-> “Read this Business Passport, find current private-label offerings for Japan, then prepare an inquiry for 2,000 units of drip-coffee-10pack to Japan, requesting samples and private-label packaging. Leave buyer identity fields blank.”
+> “Which current products from this business are suitable for a Japanese private-label buyer?”
+
+Then ask:
+
+> “Prepare an inquiry for 5,000 units of Instant Coffee for Japan, requesting samples, private-label packaging and Japanese labelling support.”
 
 Expected calls:
 
@@ -106,21 +110,19 @@ Say:
 
 ## 1:53–2:28 — Exact-draft human approval
 
-Enter:
+Enter the fictional buyer details:
 
 - Buyer company: `Kobe Coffee Trading`
 - Name: `Aiko Mori`
 - Email: `aiko@example.com`
 
-Change quantity from `2000` to `5000` and add:
+Check **I have reviewed this inquiry and approve submission.** Point to the newly available `submit_approved_inquiry`.
+
+Then change quantity from `5000` to `6000`. Point to the visible approval-revoked message and the removed submit capability. Keep or add:
 
 > “Please include Japanese labelling support.”
 
-Point out that human-edited fields lose their agent highlight.
-
-Check **I have reviewed this inquiry and approve submission.** Point to the newly available `submit_approved_inquiry`.
-
-Optionally change one field to show approval clearing and the tool being removed, then restore/reapprove.
+Point out that the edited field loses its agent highlight. Review the new exact draft and check approval again; the submit capability returns.
 
 Ask:
 
@@ -154,13 +156,13 @@ Say:
 
 ## Recovery plan
 
-- **Ledger tools absent:** wait for device hydration and confirm the route says WebMCP ready.
+- **Ledger tools absent:** wait for device hydration and confirm the route says WebMCP Ready.
 - **Proposal rejected:** use the exact field/value/source combinations above; values must occur in cited claims.
 - **Proposal already pending:** complete or reset the earlier proposal; duplicate pending fields are rejected.
 - **Passport still version 1:** resolve proposals and use the human **Publish Business Passport** button; agents cannot publish.
 - **Submit tool absent:** fill all required buyer fields and approve the exact visible draft.
 - **Submit tool disappears:** a field, idempotency key, validity state, approval, or Passport version changed; review and reapprove.
-- **Instant Coffee demo submission fails:** use the script's `drip-coffee-10pack` transaction. The process-local API still validates seeded product rules and does not receive Passport v2 authority.
+- **Instant Coffee submission fails:** confirm Passport v2 (or later) is published, Japan reads **Available by inquiry**, quantity meets the edited MOQ, all buyer fields are present, and the exact draft was reapproved after the last edit. The fictional receipt API mirrors current Instant Coffee status but still does not receive Passport destination or approval authority.
 - **Offline shell missing:** reconnect, visit the target route online, and retry. Offline-first is not supported.
 - **Repeated receipt:** an exact same-device or same-process retry is being deduplicated. Edit after submission to create a new draft key.
 
