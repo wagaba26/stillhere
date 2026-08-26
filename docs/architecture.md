@@ -1,141 +1,198 @@
 # Architecture
 
-StillHere is a deliberately small Next.js application. Its central architectural decision is to keep the human interface, browser-agent tools, validation rules, and local continuity state in the same browser session. WebMCP augments the page; it is not a separate backend product.
+StillHere is a Next.js application whose main trust boundary is the browser tab. Source evidence, agent proposals, human resolutions, published Passport versions, and the inquiry draft remain distinct objects rather than one mutable “business profile.” WebMCP augments the same visible routes and state a human uses; there is no separate MCP server.
 
-## System view
+## End-to-end flow
 
 ```mermaid
 flowchart LR
-    H[Human in browser] --> UI[Visible Next.js profile]
-    A[WebMCP-aware browser agent] --> MC[document.modelContext]
-    MC --> WT[Four page tools]
-    WT --> UI
-    UI --> D[Domain rules and seeded demo data]
-    UI --> OBS[POST /api/assessments]
-    OBS --> WEB[One public HTML page]
-    UI <--> IDB[(IndexedDB drafts and receipts)]
-    UI --> API[POST /api/inquiries]
-    API --> MEM[(Process-local Map)]
-    SW[Service worker] <--> CACHE[(Cache Storage)]
-    SW --> UI
+    ASSESS[Bounded website assessment] --> EVIDENCE[Source Evidence]
+    EVIDENCE --> LEDGER[Continuity Ledger]
+    AGENT[Browser agent] -->|inspect + stage only| LEDGER
+    HUMAN[Human] -->|accept / edit / reject / unresolved| LEDGER
+    LEDGER --> PREVIEW[Derived Passport preview]
+    HUMAN -->|publish| VERSIONS[(IndexedDB Passport versions)]
+    VERSIONS --> PROFILE[Public Business Passport route]
+    AGENT -->|read / search / prepare| PROFILE
+    HUMAN -->|exact-draft approval| PROFILE
+    PROFILE -->|conditional submit| API[Demo inquiry API]
 ```
 
-There is no account system, external crawler, MCP server, durable database, message queue, email provider, payment service, or third-party analytics integration.
+The public-URL assessment and the seeded continuity demo are deliberately separate. A live page observation produces bounded website signals, not trusted Ledger claims. The fictional seeded path supplies the Source Evidence and Continuity Ledger used for the challenge narrative.
 
-## Application layers
+## Layers
 
 | Layer | Main files | Responsibility |
 | --- | --- | --- |
-| Routes and layout | `src/app/**` | Landing, bounded assessment, recovery wizard, profile, offline fallback, manifest, and APIs |
-| Visible profile state | `src/app/business/rwenzori-harvest/profile-experience.tsx` | Inquiry form, approval, status, retry, activity, low-data control, and online/offline UI |
-| WebMCP adapter | `src/hooks/use-webmcp.ts`, `src/lib/webmcp.ts` | Feature detection, input parsing, direct tool registration, tool lifecycle, and callbacks into the visible profile |
-| Domain | `src/domain/**` | Seeded company/product data, evidence states, current-offering filters, inquiry validation, stable references, and in-memory ledger tests |
-| Device persistence | `src/lib/indexed-db.ts`, `src/lib/preferences.ts` | IndexedDB draft/receipt storage, device-local attestation and low-data preferences, and browser resource measurement |
-| Offline shell | `public/sw.js`, `src/components/service-worker-registration.tsx` | Service-worker registration, network-first profile navigation fallback, and cache-first Next static assets |
-| Public-page observer | `src/app/api/assessments/route.ts`, `src/lib/safe-site-fetch.ts`, `src/domain/assessment.ts` | Bounded request handling, SSRF controls, pinned public connection, and conservative signal extraction |
-| Demo intake route | `src/app/api/inquiries/route.ts` | Same-origin request validation and process-local idempotent demo receipts |
+| Routes | `src/app/**` | Landing, assessment, Ledger, Passport profile, offline fallback, manifest, and two API routes |
+| Assessment boundary | `src/app/api/assessments/route.ts`, `src/lib/safe-site-fetch.ts`, `src/domain/assessment.ts` | Bounded JSON request, public-only pinned network connection, one HTML response, and conservative page signals |
+| Source and Ledger domain | `src/domain/types.ts`, `src/domain/continuity-demo.ts`, `src/domain/continuity.ts` | Evidence sources, claims, conflict/unsupported detection, proposals, human resolutions, and summaries |
+| Passport domain | `src/domain/passport.ts` | Accepted-facts-only projection, destination qualification, search, v1 compatibility conversion, and version creation |
+| Ledger UI/WebMCP | `src/app/recover/recovery-wizard.tsx`, `src/hooks/use-continuity-webmcp.ts`, `src/lib/continuity-webmcp.ts` | Visible evidence and resolution queue, two hydrated route tools, human decisions, live preview, and publication |
+| Passport UI/WebMCP | `src/app/business/rwenzori-harvest/profile-experience.tsx`, `src/hooks/use-webmcp.ts`, `src/lib/passport-webmcp.ts` | Hydrated Passport, published catalogue, visible inquiry, three base tools, fingerprinted approval, and conditional submit |
+| Persistence | `src/lib/indexed-db.ts`, `src/lib/preferences.ts` | IndexedDB v2 Ledger/Passport/draft/receipt state plus Low Data and legacy-attestation compatibility keys |
+| Offline/global preferences | `public/sw.js`, `src/components/service-worker-registration.tsx`, `src/components/preference-hydrator.tsx` | Shell caching, navigation fallback, static-asset caching, and root Low Data hydration |
+| Scoped demo reset | `src/components/demo-reset-control.tsx` | Two-step deletion of demo device state while preserving Low Data and browser caches |
+| Demo receipt API | `src/app/api/inquiries/route.ts` | Seeded validation, payload-bound process-local idempotency, and fictional receipt response |
 
 ## Route map
 
-| Route | Rendering/behavior |
+| Route | Current behavior |
 | --- | --- |
-| `/` | Product thesis, assess/recover/publish story, comparison, and demo CTA |
-| `/assessment` | Deterministic fictional target or bounded observation of one supplied public HTML page |
-| `/recover` | Six-step client-side Information Attestation flow that saves a fictional local snapshot |
-| `/business/rwenzori-harvest` | Public continuity profile, WebMCP registration, inquiry collaboration, local persistence, and diagnostics |
-| `/offline` | Cacheable navigation fallback explaining offline boundaries |
-| `/api/inquiries` | `POST` route returning an idempotent fictional receipt |
-| `/api/assessments` | `POST` route validating and observing one public page without executing it |
+| `/` | Product thesis and Recover → Reconcile → Approve → Publish → Transact story |
+| `/assessment` | Seeded challenge result or bounded observation of one supplied public HTML page |
+| `/recover` | Source Evidence, Continuity Ledger, two WebMCP tools, human resolution queue, live Passport preview, and device-local publication |
+| `/business/rwenzori-harvest` | Hydrated Passport version, three base tools, conditional submit tool, local draft, activity, footprint, and offline status |
+| `/offline` | Generic cached-navigation fallback with a link to the Passport route |
+| `/api/assessments` | Same-origin JSON endpoint for seeded or bounded public-page observation |
+| `/api/inquiries` | Process-local fictional receipt endpoint |
 | `/manifest.webmanifest` | Next.js-generated PWA manifest |
-| `/sw.js` | Service worker served with explicit JavaScript, no-store, and CSP headers |
+| `/sw.js` | Service worker v2 |
 
-## Data and evidence model
+## Source Evidence and Continuity Ledger
 
-`src/domain/demo-data.ts` is the only business catalogue source in this build. Every product carries a product status and evidence state. The evidence vocabulary is:
+The seeded demo has four source types:
 
-- `OWNER_CONFIRMED`
-- `PUBLIC_EVIDENCE`
-- `LEGACY_SOURCE`
-- `CONFLICT`
-- `UNKNOWN`
+- legacy website;
+- later catalogue;
+- recent public evidence;
+- fictional business representative.
 
-`searchCurrentOfferings()` exposes only products with status `CURRENTLY_AVAILABLE` and evidence `OWNER_CONFIRMED` or `PUBLIC_EVIDENCE`. The seasonal instant-coffee record may appear in the human catalogue with a seasonal label but is deliberately excluded from WebMCP “current offering” results and from the inquiry product selector.
+Each `BusinessClaim` points to one source and one typed continuity field. Evidence states remain explicit: `OWNER_CONFIRMED`, `PUBLIC_EVIDENCE`, `LEGACY_SOURCE`, `CONFLICT`, or `UNKNOWN`.
 
-“Attested” means only that a fictional representative confirmed the individual demo claim. It does not mean identity, legal entity, registry, domain, KYC, or certification verification.
+Most stable fields begin with earlier human-accepted seed resolutions. Four deliberate review scenarios remain open:
 
-The recovery wizard writes its reviewed fictional fields to `localStorage`. The profile overlays that snapshot on the seeded record, including identity, current contacts, product states, capabilities, markets, and primary workflow. This is single-browser demo publication, not an authenticated server record.
+1. trade phone;
+2. Instant Coffee MOQ;
+3. Japan availability for Instant Coffee;
+4. an unsupported legacy certification claim.
 
-## Inquiry state flow
+Agent proposals use `AGENT_PROPOSED`. A human can produce `HUMAN_ACCEPTED`, `HUMAN_EDITED`, `HUMAN_REJECTED`, or explicitly return a proposal to `UNRESOLVED`. Staging a later proposal does not overwrite an earlier human decision. The Passport projection selects the latest accepted/edited human resolution and ignores agent-only, rejected, and unresolved states.
+
+Proposal validation requires:
+
+- one of the four reviewable fields;
+- `USE_VALUE`, except certification may only be proposed as `EXCLUDE`;
+- a field-appropriate bounded value;
+- one to four unique source IDs;
+- every source to exist and carry a claim for that field;
+- a `USE_VALUE` proposal to exactly match a value found in a cited source;
+- a nonempty explanation of at most 320 characters;
+- a batch of one to six proposals with no duplicate field and no already-pending field.
+
+The agent cannot accept, edit, reject, mark unresolved, or publish through WebMCP. Those actions exist only as visible human controls.
+
+## Passport derivation and versioning
+
+`derivePassport()` starts from human resolutions, not from the source documents. Stable offerings are cloned from the accepted resolution. Instant Coffee enters the Passport only when its current status, positive whole-number MOQ, and private-label flag have accepted values. Japan qualification is a separate destination status and remains absent until resolved. Certification is omitted when unresolved or excluded; the published product then states that no certification claim is published.
+
+The preview may therefore be published even with unresolved fields: omission is the safety behavior. Publication is always a human button action.
+
+`createPassportVersion()` deep-clones the derived Passport and assigns an incrementing version. The Ledger flow sets a minimum of version 2, distinguishing the new reconciled model from safe/legacy v1 snapshots. The app treats published version records as immutable snapshots and creates a new record for later publication.
+
+`publishPassportVersion()` uses one IndexedDB transaction to:
+
+1. write the new record to `passportVersions`;
+2. write the Continuity Ledger with `publishedVersionId` pointing to that record and an updated timestamp.
+
+## Safe v1 and legacy fallback
+
+The Passport route initializes with a deterministic safe version 1 derived from the seeded Ledger's already accepted facts. It then checks device state in this order:
+
+1. **Published:** load the Ledger's `publishedVersionId` and matching IndexedDB version.
+2. **Compatibility:** if no published version exists, strictly parse `stillhere-demo-attestation-v1` from `localStorage` and convert it to Passport v1.
+3. **Baseline:** if neither exists, or IndexedDB restoration fails, retain the safe deterministic v1 baseline.
+
+The compatibility converter excludes Instant Coffee entirely because the old attestation format cannot represent the new field-level resolution authority. It only includes legacy contacts explicitly marked current and carries over the earlier identity, product-state, capability, market, and workflow selections.
+
+Base Passport tools wait for both Passport and draft hydration, so an agent is not briefly offered an unconfirmed in-memory fallback before device storage is checked.
+
+## IndexedDB schema version 2
+
+Database: `stillhere-continuity`, version `2`.
+
+| Store | Key | Contents |
+| --- | --- | --- |
+| `drafts` | `id` | The Rwenzori Harvest inquiry draft |
+| `submissions` | `idempotencyKey` | Device-local demo receipts |
+| `continuity` | `businessId` | Sources, claims, resolutions, current published pointer, update time |
+| `passportVersions` | `id` | Versioned Passport snapshots; nonunique `businessId` index |
+
+The v1→v2 upgrade creates missing `continuity` and `passportVersions` stores without deleting v1 drafts or receipts. Connections close on `versionchange`; a blocked upgrade rejects with an actionable error rather than silently continuing against an old schema.
+
+Draft and Ledger changes use a 180 ms debounced save. Agent inquiry preparation saves before returning. Passport publication is the multi-store atomic operation described above.
+
+## Inquiry authority and state flow
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DraftLocal: hydrate/create draft
-    DraftLocal --> DraftLocal: human or agent edits; IndexedDB save
-    DraftLocal --> Approved: valid + human checks approval
-    Approved --> DraftLocal: any field edit or approval cleared
-    Approved --> Submitting: manual or WebMCP submit
-    Submitting --> Submitted: API receipt + IndexedDB receipt
-    Submitting --> Pending: offline/network/API failure
-    Pending --> Submitting: human retry after reconnect
-    Submitted --> DraftLocal: human edits; new key created
+    [*] --> Hydrating
+    Hydrating --> DraftLocal: Passport + draft checked
+    DraftLocal --> DraftLocal: human or agent edit; device save
+    DraftLocal --> Approved: valid + human approves exact fingerprint
+    Approved --> DraftLocal: field, key, Passport, validity, or approval changes
+    Approved --> Submitting: manual or conditional WebMCP submit
+    Submitting --> Submitted: demo API receipt
+    Submitting --> Pending: offline, network, or API failure
+    Pending --> Submitting: visible manual retry
 ```
 
-The profile keeps a single `InquiryDraft` as the source of truth. `prepare_business_inquiry` invokes the same `prepareInquiry()` function used by application logic, updates the visible React state, saves it to IndexedDB, scrolls to the form, and focuses the first control. Human edits remove that field's agent highlight and revoke approval.
+The authority fingerprint includes the Passport version ID, every visible inquiry field, and the idempotency key. Approval records that fingerprint. Submit registration and execution require it to equal the current fingerprint. `performSubmit()` repeats that comparison and Passport-aware client validation.
 
-The draft carries a generated idempotency key. The API derives a stable `SH-...` reference from it, checks header/body agreement, binds the accepted key to a SHA-256 hash of the reviewed payload, and returns the earlier in-process receipt only when a duplicate key carries the same payload. The browser also stores a successful receipt by key and returns it before another request from that device.
+The client checks published product status, destination qualification (`SUPPORTED` or `AVAILABLE_BY_INQUIRY`), and private-label availability. A human edit removes the field's agent highlight, clears the receipt/error state, and revokes approval. Editing a submitted or pending draft also generates a new idempotency key.
 
-This is demonstration idempotency, not distributed idempotency: the API `Map` resets with the server process and is not shared across instances.
+The server route does not receive the Passport version/fingerprint; it revalidates against seeded demo product rules. This is a documented demo boundary, not end-to-end Passport authorization.
 
-## WebMCP lifecycle
+## Six WebMCP tools and lifecycle
 
-The profile feature-detects `document.modelContext.registerTool`. Unsupported browsers set a visible “human experience active” state and retain every manual capability.
+The app defines six tools across two routes:
 
-The hook has two registration effects:
+- `/recover`: two Ledger tools;
+- Passport route: three base tools and one conditional submit tool.
 
-1. The base effect creates an `AbortController`, registers the three read/prepare tools with its signal, and aborts on unmount.
-2. The submit effect runs only when both `approved` and `valid` are true. It registers `submit_approved_inquiry` with a fresh signal. React effect cleanup aborts that signal as soon as either dependency changes, unregistering the consequential tool.
+Each route feature-detects `document.modelContext.registerTool` and waits for local state hydration. Route controllers unregister all route tools on navigation. The conditional submit controller is additionally aborted when the exact authority changes. Registered callbacks read current state through refs.
 
-Execution rechecks the latest state through refs/callbacks, so passing registration once is not treated as permanent authority. See [webmcp.md](webmcp.md).
+See [webmcp.md](webmcp.md) for schemas, validation, and exact tests.
 
-## Offline and low-data design
+## Offline and global Low Data
 
-The service worker precaches the profile route, offline route, manifest, and icon using `Promise.allSettled`. It ignores non-GET, cross-origin, API, React Server Component, and prefetch requests. It then:
+Service Worker v2 precaches:
 
-- serves previously cached `/_next/static/` assets before the network;
-- treats document navigation as network-first;
-- caches successful profile/offline navigation responses;
-- falls back to the cached profile for that route, otherwise the offline page.
+- `/business/rwenzori-harvest`;
+- `/recover`;
+- `/offline`;
+- `/manifest.webmanifest`;
+- `/icon.svg`.
 
-The profile is therefore available offline only after a successful online installation/cache. A failed precache entry does not fail the whole service-worker install, so “profile ready” means the service worker is active, not a proof that every possible asset is permanently available. Cache and IndexedDB data remain subject to browser eviction.
+Document navigations are network-first with per-route cached fallback. Previously fetched `/_next/static/` assets are cache-first. API, cross-origin, non-GET, RSC, and router-prefetch requests are excluded. `Promise.allSettled` allows install to continue if one precache item fails, so an active worker is not proof that every resource is cached. The Passport UI explicitly checks whether its route response is present before showing profile availability.
 
-Low Data mode persists in `localStorage`, applies an `html[data-low-data="true"]` rendering mode, hides decorative elements, simplifies layout, and removes animations/transitions/backdrop filters. It cannot recover bytes already transferred before the switch. Resource counts and bytes come from `performance.getEntriesByType("resource")`, with the UI explicitly explaining that zero may mean cached or unavailable timing details.
+The cached `/recover` shell can restore the Ledger from IndexedDB and publish a Passport locally after a prior successful online load. There is no Background Sync, and inquiry submission remains pending offline.
 
-## API behavior
+`PreferenceHydrator` runs in the root layout and applies the stored Low Data value to `html[data-low-data]` across routes. The visible toggle is on the Passport route. The preference hides selected decoration, simplifies layouts, and disables CSS motion/filter effects; it does not unload previously transferred resources.
 
-`POST /api/assessments` accepts a small JSON body containing one URL. The deterministic `.example` target returns seeded challenge data. Other inputs pass through protocol, credential, hostname, port and IP-range checks. DNS results must all be public, and the selected address is pinned into the HTTP/TLS connection while preserving the original Host header and TLS server name. Every redirect repeats the same validation. The route reads at most 750 KB of uncompressed HTML, follows at most three redirects, runs within a nine-second network budget, does not execute scripts or retrieve subresources, and returns only derived strings/numbers. Same-origin browser requests, a per-process request window, and a concurrency ceiling reduce casual abuse; durable distributed throttling remains future work.
+## Scoped two-step reset
 
-The analyzer intentionally reports `Not attested`, zero confirmed-current products, and conservative limitations for public URLs. A year in page text, a contact link, or Product schema is an observation—not business verification.
+The footer reset requires **Reset demo** followed by **Confirm reset**. Its IndexedDB transaction deletes:
 
-`POST /api/inquiries`:
+- the named demo inquiry draft;
+- submission receipts in the demo store;
+- the Rwenzori Harvest Continuity Ledger;
+- only Passport versions whose `businessId` is `rwenzori-harvest`.
 
-1. Rejects a declared `Content-Length` over 20,000 bytes.
-2. Requires an `Idempotency-Key` of at most 160 characters.
-3. Parses JSON.
-4. Requires the header key to match `draft.idempotencyKey`.
-5. Revalidates product, quantity, destination, buyer company/name, and email.
-6. Returns an existing in-process receipt for a duplicate key.
-7. Otherwise returns HTTP `202` with `{ receipt, duplicate: false, demo: true }` and `Cache-Control: no-store`.
+It then removes the legacy attestation compatibility key and navigates to `/assessment`. Low Data and Cache Storage are intentionally preserved. This is not a general origin-data wipe or server-state reset.
 
-No delivery occurs after acceptance.
+## API boundaries
+
+### Assessment
+
+`POST /api/assessments` accepts at most 4 KB of JSON, rejects cross-origin browser requests, enforces process-local per-address/concurrency limits, and either returns the seeded result or invokes the public-only safe fetcher. The fetcher uses standard ports, blocks reserved/private/mixed DNS results, pins a validated address, retains Host/TLS name verification, revalidates up to three redirects, enforces a nine-second total budget and 750 KB identity-encoded HTML limit, and does not execute or return source HTML.
+
+### Inquiry
+
+`POST /api/inquiries` requires an `Idempotency-Key` matching the draft, applies seeded inquiry validation, hashes the reviewed payload with SHA-256, returns the same in-process receipt for an exact retry, and rejects changed payload under a used key. New acceptance returns HTTP 202 and `Cache-Control: no-store`.
+
+The receipt ledger is a process-local `Map`: restart or another instance loses it. It is not delivery, and the 20 KB protection depends on declared `Content-Length` rather than a hard streamed body limit.
 
 ## Production evolution
 
-The current boundaries make the challenge story safe and reproducible. A real service would need, at minimum:
-
-- authenticated representative roles and a traceable attestation workflow;
-- a durable database and globally enforced idempotency constraint;
-- retention, deletion, encryption, and access policies for buyer data;
-- rate limiting, abuse controls, observability, and CSRF/origin review appropriate to the chosen authentication model;
-- a real delivery adapter with explicit recipient verification and auditable status;
-- durable edge rate limiting, egress monitoring and adversarial review for the public-page observer;
-- independent accessibility, performance, security, and agent-evaluation passes.
+A real service needs authenticated representatives and organizations, durable source/resolution/Passport storage, signed or otherwise verifiable Passport provenance, globally constrained idempotency, server-side Passport-version authority, retention/deletion policy, edge abuse controls, observability, and a verified external delivery adapter with honest queued/delivered/failed states.

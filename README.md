@@ -2,86 +2,114 @@
 
 > The website may be outdated. The business isn't.
 
-StillHere is business continuity infrastructure for the long tail of the web. It recovers candidate facts from a stale digital presence, asks a business representative to attest what is current, and publishes a small continuity profile that people and browser agents can use together.
+StillHere is a business-continuity layer for the long tail of the web. It recovers conflicting source evidence, lets an agent stage bounded resolutions, leaves every authoritative decision to a human, and publishes accepted facts as a versioned Business Passport that people and browser agents can use together.
 
-This repository is a submission to the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/). It uses the current experimental WebMCP API directly: search the source for [`registerTool`](src/hooks/use-webmcp.ts).
+Built for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/).
 
-**Live demo:** [stillhere-azure.vercel.app](https://stillhere-azure.vercel.app)
+- **Live demo:** [stillhere-azure.vercel.app](https://stillhere-azure.vercel.app)
+- **Source:** [github.com/wagaba26/stillhere](https://github.com/wagaba26/stillhere)
+- **Demo account:** none
 
-## Why this exists
+## The problem
 
-An active business can have a website that is abandoned, heavy, or unreliable. Agent tooling can make that site easier to operate, but it cannot make stale claims true.
+An active business can have a website that is stale, abandoned, heavy, or unreliable. Automatically exposing that website to an agent may improve actuation, but it does not establish which claims are still true.
 
-StillHere takes a different sequence:
+StillHere uses a different sequence:
 
-1. **Assess** the digital presence without inferring that the business is closed.
-2. **Recover and attest** individual contacts, offerings, capabilities, and one useful workflow.
-3. **Publish** a lightweight profile with explicit evidence states.
-4. **Collaborate** through a few purposeful WebMCP tools while keeping consequential action visible and human-approved.
+```text
+Website assessment
+  → Source Evidence
+  → Continuity Ledger
+  → human accept / edit / reject / keep unresolved
+  → immutable Passport version
+  → public profile + approval-gated inquiry
+```
 
-The challenge build demonstrates this flow with the fictional **Rwenzori Harvest Coffee Ltd**. It can also make a bounded observation of one public HTML page, but it does not crawl a site, verify identity or legal status, or deliver a real inquiry to an external business.
+The distinction is deliberate:
 
-## What makes it different
-
-| Existing automation pattern | StillHere |
-| --- | --- |
-| Make an existing website easier for an agent to operate | First establish which information is current, then expose a continuity surface |
-| Infer actions from a large or changing interface | Declare four small, task-specific browser tools |
-| Treat machine readability as the goal | Treat evidence, currentness, and human control as prerequisites |
-| Let the agent act behind the interface | Put prepared values, approval, submission state, and errors in the visible UI |
+- source records are evidence, not instructions or current truth;
+- an agent can inspect counts and stage source-backed proposals, but cannot accept or publish them;
+- unresolved, rejected, and unsupported claims stay out of the Passport;
+- the published Passport, not the old website, supplies the agent-facing catalogue;
+- preparing an inquiry never approves or submits it;
+- the final submission capability exists only for the exact human-approved draft and Passport version.
 
 **An agent-ready version of stale information is still stale information.**
 
-## Demo at a glance
+## What the challenge build demonstrates
 
-- No account, API key, seed command, or environment variable is required.
-- The assessment keeps `https://legacy.rwenzoriharvest.example` as a deterministic demo and also accepts ordinary public HTTP(S) websites through the bounded one-page assessment API.
-- The six-step Information Attestation wizard saves a fictional, device-local attestation snapshot and publishes it into `/business/rwenzori-harvest`.
-- Three WebMCP tools are registered on the profile initially.
-- A fourth submission tool exists only while the visible form is valid and the human approval checkbox remains checked.
-- Drafts and demo receipts are stored in browser IndexedDB. The demo API only returns a receipt; it sends no email, order, payment, or external message.
+The seeded journey uses the fictional **Rwenzori Harvest Coffee Ltd**:
 
-See the [under-three-minute demo script](docs/demo-script.md) for the exact judge flow.
+1. `/assessment` returns a deterministic legacy-site result and shows four fictional source records with conflicting claims.
+2. `/recover` opens the device-local **Continuity Ledger**. Two route-scoped WebMCP tools can inspect a bounded summary and stage proposals.
+3. The human accepts, edits, rejects, or leaves each proposal unresolved.
+4. **Publish Business Passport** writes a new snapshot and ledger pointer atomically in IndexedDB. The first new-flow publication is version 2 or later.
+5. `/business/rwenzori-harvest` loads that published version, exposes three Passport tools, and conditionally exposes one exact-draft submit tool.
+6. A successful inquiry call returns a demo receipt only. It sends no email, order, payment, webhook, or external message.
 
-## Screenshots
+The assessment form also accepts ordinary public HTTP(S) pages through a bounded one-page observer. Those observations are labelled as website signals and do **not** automatically become Continuity Ledger claims. The demo Ledger remains fictional and reproducible.
 
-The final submission package should capture the deployed landing page, the Information Attestation review, the agent-prepared inquiry, and the approval-gated tool lifecycle after the public repository and demo video are frozen.
+## Why it is different
+
+| Existing automation pattern | StillHere |
+| --- | --- |
+| Make the old website easier for an agent to operate | Establish which claims are publishable first |
+| Treat retrieved text as context for action | Keep source evidence untrusted and separate from executable tool definitions |
+| Give the agent a broad action surface | Expose six small, route-scoped tools across reconciliation and transaction |
+| Hide state changes behind an agent | Show proposals, human decisions, Passport version, prepared fields, approval, and errors in the UI |
+| Update one mutable profile | Publish a new Passport snapshot and retain earlier device-local versions |
+
+## Six route-scoped WebMCP tools
+
+The source contains direct `document.modelContext.registerTool(...)` calls in [`use-continuity-webmcp.ts`](src/hooks/use-continuity-webmcp.ts) and [`use-webmcp.ts`](src/hooks/use-webmcp.ts).
+
+| Route | Tool | Availability and authority |
+| --- | --- | --- |
+| `/recover` | `inspect_business_truth` | Read-only bounded counts and review fields; never returns raw source documents |
+| `/recover` | `stage_claim_resolutions` | Stages validated, source-backed proposals; cannot accept, reject, edit, or publish |
+| `/business/rwenzori-harvest` | `get_business_passport` | Returns the same hydrated Passport version rendered in the tab; read-only |
+| `/business/rwenzori-harvest` | `search_current_offerings` | Searches only published current offerings and preserves destination qualification; read-only |
+| `/business/rwenzori-harvest` | `prepare_business_inquiry` | Populates, highlights, and saves the visible draft; never approves or submits |
+| `/business/rwenzori-harvest` | `submit_approved_inquiry` | Registered only while the exact visible draft and Passport version match human approval |
+
+Each route waits for device state to hydrate before registering its base tools. Every registration receives an `AbortController` signal and is removed when its route unmounts. The submit tool uses its own controller and is removed when approval, validity, draft contents, idempotency key, or Passport version changes.
+
+All tool inputs are checked against JSON Schema **and** strict runtime parsers. Unexpected keys, malformed batches, invented fields, unsupported values, unknown/mismatched source IDs, invalid destination/private-label combinations, and stale approval fingerprints are rejected in application code.
+
+WebMCP remains progressive enhancement: feature detection falls back to the complete human UI. The API is experimental; see the [WebMCP project](https://github.com/webmachinelearning/webmcp), [Chrome WebMCP overview](https://developer.chrome.com/docs/ai/webmcp), [Chrome imperative API](https://developer.chrome.com/docs/ai/webmcp/imperative-api), and [Chrome evaluation guidance](https://developer.chrome.com/docs/ai/webmcp/evals).
 
 ## Architecture
 
 ```text
-Next.js App Router
-├─ bounded one-page assessment API + deterministic demo
-├─ attested fictional business data + domain rules
-├─ public continuity profile
-│  ├─ visible inquiry state and approval
-│  └─ direct document.modelContext.registerTool(...) integration
-├─ IndexedDB drafts and receipts
-├─ service worker + Cache Storage profile fallback
-├─ POST /api/assessments (SSRF-resistant public-page observation)
-└─ POST /api/inquiries (process-local demo receipt ledger)
+Next.js 16 App Router
+├─ POST /api/assessments: bounded public-page observation + seeded demo
+├─ Source Evidence: sources and claims remain separate
+├─ Continuity Ledger: agent proposals + human resolutions
+├─ IndexedDB v2
+│  ├─ drafts
+│  ├─ submissions
+│  ├─ continuity
+│  └─ passportVersions
+├─ Business Passport profile
+│  ├─ published v2+ snapshot
+│  ├─ validated v1 compatibility snapshot, when present
+│  └─ safe accepted-facts-only v1 baseline
+├─ route-scoped direct WebMCP tools
+├─ Service Worker v2: cached /recover, Passport, and offline shells
+└─ POST /api/inquiries: process-local demo receipt ledger
 ```
 
-The browser tab is the collaboration boundary: WebMCP tools reuse the same domain functions and form state that the human sees. No separate MCP server or agent-only workflow is involved. Read the full [architecture](docs/architecture.md), [WebMCP implementation notes](docs/webmcp.md), and [security model](docs/security.md).
+Read [architecture.md](docs/architecture.md), [webmcp.md](docs/webmcp.md), and [security.md](docs/security.md) for the exact data, authority, persistence, and threat boundaries.
 
-## WebMCP tools
+## Screenshots
 
-| Tool | Availability | Effect |
-| --- | --- | --- |
-| `get_business_status` | While the profile is open | Returns compact attested status and capabilities; read-only |
-| `search_current_offerings` | While the profile is open | Returns only currently available, evidence-eligible products; read-only |
-| `prepare_business_inquiry` | While the profile is open | Updates and highlights the visible form, validates it, and saves the draft locally; never submits |
-| `submit_approved_inquiry` | Only while the form is valid **and** approved | Revalidates current visible state, calls the demo API, and records the receipt |
-
-The registration lifecycle uses `AbortController`. Base tools are aborted when the profile unmounts. The submit tool is registered by a separate effect when `approved && valid` becomes true, then unregistered immediately by aborting its signal if approval or validity changes.
-
-WebMCP is progressive enhancement. `document.modelContext` is feature-detected, and the complete human form remains usable in an ordinary browser. WebMCP itself is an experimental proposed standard; see the [WebMCP project](https://github.com/webmachinelearning/webmcp), [Chrome overview](https://developer.chrome.com/docs/ai/webmcp), and [Chrome imperative API guide](https://developer.chrome.com/docs/ai/webmcp/imperative-api).
+> Submission placeholder: add the deployed Source Evidence result, Continuity Ledger proposal/human-decision state, Passport v2 profile, and exact-draft submit lifecycle after the final demo recording is frozen.
 
 ## Run locally
 
-Prerequisites:
+Requirements:
 
-- Node.js 24.x (declared in `package.json`)
+- Node.js 24.x
 - npm
 
 ```bash
@@ -89,36 +117,52 @@ npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). For the complete human path:
+Open [http://localhost:3000](http://localhost:3000).
 
-1. Select **Try Demo**.
-2. Submit the prefilled deterministic URL, or replace it with a public website to test the bounded observer.
-3. Select **Recover & attest current information**.
-4. Walk through the six attestation screens and publish the demo profile.
-5. Complete all required inquiry fields, check the explicit approval control, and select **Send approved inquiry**.
+To start from a clean demo state, use the two-step footer control:
 
-The final step returns a demo receipt only.
+1. Select **Reset demo**.
+2. Read the scope, then select **Confirm reset**.
 
-## Test WebMCP exactly
+The reset removes this device's StillHere demo Ledger, Passport versions, inquiry draft, receipts, and legacy v1 attestation snapshot. It preserves Low Data and browser caches, then returns to `/assessment`.
 
-Use either ChatGPT's in-app browser, which the [challenge page](https://openai.com/webmcp-challenge/) identifies as WebMCP-capable, or a compatible Chrome build:
+## Exact WebMCP test path
 
-1. For local Chrome testing, open `chrome://flags/#enable-webmcp-testing`.
-2. Set the flag to **Enabled** and relaunch Chrome, following the [Chrome WebMCP setup](https://developer.chrome.com/docs/ai/webmcp#get-started).
-3. Run the app and open `http://localhost:3000/business/rwenzori-harvest`.
-4. Confirm the page shows **WebMCP ready** and three tools available.
-5. Ask the browser agent: **“Is this business currently active, and find a product suitable for private-label distribution in Japan.”**
-6. Confirm calls to `get_business_status` and `search_current_offerings` appear in **Agent Activity**.
-7. Ask: **“Prepare an inquiry for 2,000 units of drip-coffee-10pack, requesting samples, private-label packaging and delivery information for Kobe, Japan.”**
-8. Confirm `prepare_business_inquiry` visibly fills and highlights the supplied fields, reports the three missing buyer fields, and does **not** submit.
-9. Enter fictional buyer details, change quantity to `5000`, add **“Please include Japanese labelling support.”**, and confirm the human-edited fields lose their agent highlight.
-10. Check **I have reviewed this inquiry and approve submission**. Confirm `submit_approved_inquiry` becomes available.
-11. Ask the agent to submit the approved inquiry. Confirm the visible receipt and activity entry.
-12. Edit any form field or clear approval. Confirm the submission tool is removed/locked.
+Use ChatGPT's in-app browser, identified as WebMCP-capable by the [challenge FAQ](https://openai.com/webmcp-challenge/), or a compatible Chrome build:
 
-For deterministic verification of descriptions, schemas, UI side effects, and lifecycle behavior, see [docs/webmcp.md](docs/webmcp.md). Chrome recommends combining deterministic tests with agent evaluations in its [WebMCP eval guidance](https://developer.chrome.com/docs/ai/webmcp/evals).
+1. In Chrome, open `chrome://flags/#enable-webmcp-testing`, enable the flag, and relaunch as described in [Chrome's setup](https://developer.chrome.com/docs/ai/webmcp#get-started).
+2. Open `http://localhost:3000/assessment` and assess the prefilled fictional URL.
+3. Select **Review recovered evidence** to open `/recover`.
+4. Confirm **WebMCP ready**. Ask: **“Inspect the recovered business truth.”** Expect `inspect_business_truth`.
+5. Ask the agent to call `stage_claim_resolutions` with these source-backed proposals:
+   - `tradePhone`: `USE_VALUE`, `+256 780 240 826`, sources `representative-2026` and `public-evidence-2026`;
+   - `instantCoffeeMoq`: `USE_VALUE`, `2500`, source `representative-2026`;
+   - `japanAvailability`: `USE_VALUE`, `AVAILABLE_BY_INQUIRY`, source `representative-2026`;
+   - `certification`: `EXCLUDE`, sources `legacy-website-2021` and `representative-2026`.
+6. Confirm the proposals appear visibly and nothing is accepted automatically. As the human, accept or edit the first three and accept the certification exclusion.
+7. Select **Publish Business Passport**. Confirm the profile shows Passport version 2 or later.
+8. Ask: **“Read the published Business Passport and find current private-label offerings for Japan.”** Expect `get_business_passport` and `search_current_offerings`. The reconciled Instant Coffee result is qualified **available by inquiry**, not silently upgraded to supported.
+9. Ask: **“Prepare an inquiry for 2,000 units of drip-coffee-10pack to Japan, requesting samples and private-label packaging. Leave buyer identity fields blank.”** Expect `prepare_business_inquiry`; the visible form changes, three buyer fields remain for the human, and nothing submits.
+10. Enter fictional buyer details, edit any prepared value, and check the approval control. Confirm `submit_approved_inquiry` appears.
+11. Clear approval or edit a field and confirm the tool is removed. Reapprove the exact draft, ask the agent to submit, and confirm the visible `SH-...` demo receipt.
 
-## Quality checks
+The complete recording script is in [docs/demo-script.md](docs/demo-script.md).
+
+## Persistence, offline, and Low Data
+
+The browser database is `stillhere-continuity`, schema version 2. It upgrades a version-1 database without deleting existing drafts or receipts, then adds `continuity` and `passportVersions`. Passport publication stores the new version and updates the Ledger's `publishedVersionId` in one IndexedDB transaction.
+
+Profile loading is conservative:
+
+1. use the published IndexedDB Passport when available;
+2. otherwise convert a strictly validated legacy `stillhere-demo-attestation-v1` snapshot into a compatibility Passport v1, omitting unreviewed Instant Coffee details;
+3. otherwise retain the safe deterministic Passport v1 baseline containing only already accepted facts.
+
+The service worker precaches `/recover`, `/business/rwenzori-harvest`, `/offline`, the manifest, and the icon. It uses network-first document navigation and cache-first previously seen Next.js static assets. Offline use requires a successful prior online visit and remains subject to browser storage eviction. `/recover` can restore the device Ledger and publish locally while offline; inquiry submission is never reported as successful offline and must be retried manually.
+
+Low Data is a global root preference. The Passport toggle writes it to `localStorage`; the root hydrator reapplies `html[data-low-data]` across routes. It hides selected decoration, simplifies layouts, and disables animation, transitions, and backdrop filtering. It does not unload bytes already transferred. The Data Footprint panel reports Resource Timing observations; zero may mean cached or unavailable detail, not a benchmark.
+
+## Verification
 
 ```bash
 npm run lint
@@ -127,66 +171,47 @@ npm run test
 npm run build
 ```
 
-Run the same suite in one command:
+Or run all checks:
 
 ```bash
 npm run check
 ```
 
-The automated tests cover business and offering filters, inquiry validation, idempotent receipt behavior, IndexedDB persistence, low-data preference, WebMCP feature detection and approval logic, public-page signal extraction, URL/network boundary validation, and the assessment route contract. The browser lifecycle and offline scenarios still require the manual checks in [docs/demo-script.md](docs/demo-script.md).
+At commit `96366cf`, the verified test snapshot is **12 test files and 78 passing tests**. Coverage includes assessment parsing and SSRF boundaries, claim conflict/resolution rules, Passport derivation and safe fallbacks, six tool definitions and strict parsing, retained-executor revocation, inquiry authority and idempotency, IndexedDB v1→v2 migration/atomic publication/scoped reset, and global preference compatibility.
 
-## Low-data and offline behavior
+Automated tests do not replace a WebMCP-capable browser pass, offline navigation test, or probabilistic agent evaluation.
 
-Low Data mode is a real local preference. It switches the rendered profile to a simpler layout, hides decorative marks, and disables CSS animation, transitions, and backdrop filtering. The application already uses system fonts and no third-party media or embeds. The Data Footprint card reports values observed through the browser Resource Timing API; zero bytes may mean cached data or unavailable transfer detail, not a performance claim.
+## Safety and current limits
 
-The switch does **not** unload JavaScript or CSS already transferred for the current visit. No before/after benchmark is claimed until one is measured independently.
+- All Ledger, Passport, business, contact, product, and representative records are fictional seeded data.
+- Live assessment reads one bounded public HTML response and derives conservative signals; it does not crawl linked pages, execute JavaScript, verify a business, or feed arbitrary remote text into WebMCP definitions.
+- There are no accounts, representative authentication, KYC, registry checks, domain checks, or certification audits.
+- Ledger/Passport/draft/receipt state is device-local IndexedDB. The legacy compatibility snapshot and Low Data preference use `localStorage`.
+- Published Passport versions are immutable application snapshots on that device, not signed public credentials or server records.
+- The inquiry API stores keys and receipts in a process-local `Map`. It binds a key to a SHA-256 hash of the reviewed payload for same-process retries, but state resets on restart and is not shared across instances.
+- The inquiry route does not persist the Passport version or deliver externally. Its server validation uses seeded demo product rules; Passport/destination authority and exact-version approval are enforced in the browser in this build.
+- The inquiry route's 20 KB check trusts declared `Content-Length`; production needs an edge/parser hard limit, durable idempotency, abuse controls, authenticated authority, and a real delivery status model.
+- Assessment throttles and concurrency caps are also process-local.
+- Browser cache and IndexedDB can be cleared or evicted; offline-first use is not supported.
+- WebMCP support depends on an experimental compatible browser. Ordinary browsers retain the human experience.
 
-After an online visit installs the service worker, the business profile can fall back to its cached response. Static Next.js assets are cached on first use. IndexedDB retains the inquiry draft across refreshes on the same browser profile. First-visit offline access is not supported, and browser storage eviction or site-data clearing can remove all local state.
-
-Offline submission is never reported as successful. The draft remains local with `SUBMISSION PENDING`; the user must reconnect and retry. There is no Background Sync queue.
-
-## Safety and privacy
-
-- The assessment reads one public HTML response only. It blocks private/reserved IP space, credentials, nonstandard ports and reserved hostnames; resolves and validates every redirect; pins the validated address for the connection; enforces time, redirect, request and response limits; requires same-origin browser requests; and never executes remote JavaScript.
-- Legacy/public text is fixed untrusted display data and never generates executable tool definitions.
-- Agent inputs are schema-bounded and validated again in application code.
-- Preparing an inquiry cannot submit it.
-- Submission is gated twice: tool registration requires valid, approved state, and execution rechecks both.
-- Any human field edit revokes approval and removes the submit tool.
-- The API checks request size, the `Idempotency-Key` header, header/body agreement, and the full inquiry again.
-- Activity entries describe actions without recording buyer field values.
-
-This is not an authenticated production intake system. Buyer fields are saved in device-local IndexedDB and POSTed to the same-origin demo route. The route keeps accepted keys only in process memory; it has no durable database, cross-instance idempotency, rate limiting, abuse controls, or external delivery. Do not enter real personal or commercial information in a public demo deployment. See [docs/security.md](docs/security.md).
+Do not enter real personal or commercial information in the public demo. See [security.md](docs/security.md).
 
 ## Deploy
 
 ### Vercel
 
-1. Push this directory to a public Git repository.
-2. Import the repository into Vercel as a Next.js project.
-3. Keep the default install and build behavior (`npm ci`/`npm run build`); no environment variables are required.
-4. Confirm the project uses Node.js 24.x, then deploy.
-5. Run `npm run check` locally and repeat the browser/WebMCP/offline checks against the production URL.
-6. Add the public repository and demo-video links below before submitting the challenge entry.
+1. Import [the repository](https://github.com/wagaba26/stillhere) into Vercel as a Next.js project.
+2. Use Node.js 24.x and the default `npm ci` / `npm run build` behavior.
+3. No environment variables are required for the challenge demo.
+4. Deploy over HTTPS.
+5. Run `npm run check`, the exact two-route WebMCP flow, reset, migration/fallback, and offline checks against the production deployment.
 
 - **Live app:** [https://stillhere-azure.vercel.app](https://stillhere-azure.vercel.app)
 - **Source:** [https://github.com/wagaba26/stillhere](https://github.com/wagaba26/stillhere)
 - **Demo video:** `[add final video URL]`
 
-The service worker requires HTTPS in production (localhost is allowed for development). Other Node-compatible deployment targets must support Next.js 16 App Router route handlers and static asset/service-worker delivery.
-
-## Current limitations
-
-- All published company, contact, product and attestation records are fictional seeded demo data. Results for user-supplied public URLs are live page observations and are labelled separately.
-- The recovery wizard persists a fictional attestation snapshot in `localStorage` and applies it to the profile on that browser only; it is not authenticated or published to a backend.
-- Public assessment inspects only the final HTML response for one page. It does not load scripts, images, PDFs or linked pages, and its year/contact/Product-schema signals do not prove currentness.
-- Assessment throttling and concurrency limits are process-local. A production multi-instance service should add durable edge rate limiting, abuse controls and monitoring.
-- IndexedDB drafts, receipts, and low-data preferences are specific to one browser profile/device.
-- API idempotency is a process-local `Map`; it is neither durable nor shared across server instances. The browser receipt provides an additional same-device retry guard.
-- “Submit” produces a demo receipt but does not send email, notify a business, create an order, or call an external service.
-- Cached profile access requires a successful prior online visit and remains subject to browser cache/storage eviction.
-- WebMCP support depends on an experimental compatible browser or in-app browser. Other browsers receive the normal human experience.
-- Information Attestation in this demo is not identity verification, KYC, registry verification, domain control, or certification auditing.
+Other Node-compatible targets must support Next.js 16 App Router route handlers, the Node runtime used by the safe assessment fetcher, and static service-worker delivery.
 
 ## License
 

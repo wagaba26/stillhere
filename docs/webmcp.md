@@ -1,198 +1,235 @@
 # WebMCP implementation
 
-StillHere uses WebMCP's imperative browser API directly. The source contains literal `document.modelContext.registerTool(...)` calls in `src/hooks/use-webmcp.ts`; there is no wrapper package, generated MCP server, or hidden agent-only endpoint.
+StillHere uses WebMCP's imperative browser API directly. Literal `document.modelContext.registerTool(...)` calls live in:
 
-WebMCP is an experimental proposed web standard. The implementation follows the current [`document.modelContext` proposal](https://github.com/webmachinelearning/webmcp) and Chrome's [WebMCP](https://developer.chrome.com/docs/ai/webmcp) and [imperative API](https://developer.chrome.com/docs/ai/webmcp/imperative-api) documentation.
+- `src/hooks/use-continuity-webmcp.ts` for the Continuity Ledger route;
+- `src/hooks/use-webmcp.ts` for the Business Passport route.
 
-## Progressive enhancement
+Tool definitions and strict runtime parsing are separated into `src/lib/continuity-webmcp.ts` and `src/lib/passport-webmcp.ts`. There is no generated MCP server, wrapper framework, or agent-only backend.
 
-`hasWebMcp()` checks for `document.modelContext.registerTool`. The profile has four visible status outcomes:
+WebMCP is an experimental proposed standard. The implementation follows the current [WebMCP project](https://github.com/webmachinelearning/webmcp), [Chrome overview](https://developer.chrome.com/docs/ai/webmcp), and [Chrome imperative API guide](https://developer.chrome.com/docs/ai/webmcp/imperative-api).
 
-- `checking`
-- `unsupported`
-- `ready`
-- `error`
+## Route scope and progressive enhancement
 
-If unsupported, no polyfill is loaded and no manual feature is disabled. A person can browse offerings, fill the form, approve it, submit to the same demo route, save a draft locally, and use offline fallback without an agent.
+There are exactly six tool definitions, but they are never all active in one tab at once:
 
-The tools exist only while `/business/rwenzori-harvest` is mounted. This is consistent with WebMCP's tab/page-bound model rather than a persistent server-side MCP service.
+| Route | Initial tools | Conditional tool |
+| --- | --- | --- |
+| `/recover` | `inspect_business_truth`, `stage_claim_resolutions` | none |
+| `/business/rwenzori-harvest` | `get_business_passport`, `search_current_offerings`, `prepare_business_inquiry` | `submit_approved_inquiry` |
 
-## Registered tools
+Both hooks feature-detect `document.modelContext.registerTool`. If unsupported, the route reports `unsupported` and keeps the complete human workflow available.
 
-### `get_business_status`
+Registration waits for device hydration:
 
-- **Availability:** base profile lifecycle
+- the Ledger waits until stored continuity state and version history have been checked;
+- the profile waits until both the Passport and inquiry draft have been checked.
+
+That prevents an agent from acting on a transient default while a different device-local authority is loading.
+
+Each route creates an `AbortController` and passes its signal to every base registration. Navigating away aborts the controller and removes the tools. The profile creates a separate controller for submission; its cleanup also records a visible `removed` activity entry when an available tool loses authority.
+
+## Ledger tools
+
+### `inspect_business_truth`
+
+- **Route:** `/recover`
 - **Annotation:** `readOnlyHint: true`
-- **Input:** optional `language` string, limited to 16 characters; the demo validates it but returns English
-- **Output:** business ID, name, `ACTIVE` status, country, sector, confirmation date, evidence state, four boolean capabilities, and a fictional-data note
-- **Side effect:** two metadata-only Agent Activity entries (`called`, `completed`)
+- **Input:** exact empty object; unexpected keys are rejected
+- **Output:** business name plus source, resolved, conflict, unresolved, unsupported-claim counts, fields needing review, and latest representative-attestation date
+- **Privacy/scope:** derives the business name from the current accepted-facts Passport preview, but never returns recovered source documents or raw source text
 
-The result is compact domain data, not HTML or a page scrape.
+The tool reads the latest Ledger through a ref and adds a metadata-only activity entry.
+
+### `stage_claim_resolutions`
+
+- **Route:** `/recover`
+- **Annotation:** `readOnlyHint: false`
+- **Input:** one to six proposal objects
+- **Effect:** appends `AGENT_PROPOSED` resolutions to the visible Ledger and persists them locally
+- **Non-authority:** cannot accept, edit, reject, mark unresolved, publish, or change an earlier human decision
+- **Output:** staged proposal IDs/fields, `humanReviewRequired: true`, and `published: false`
+
+Each proposal allows only:
+
+| Field | Action | Value |
+| --- | --- | --- |
+| `tradePhone` | `USE_VALUE` | nonempty string, max 240 |
+| `instantCoffeeMoq` | `USE_VALUE` | positive whole number, max 1,000,000 |
+| `japanAvailability` | `USE_VALUE` | `SUPPORTED`, `AVAILABLE_BY_INQUIRY`, `UNSUPPORTED`, or `UNKNOWN` |
+| `certification` | `EXCLUDE` | no `proposedValue` permitted |
+
+Every proposal also requires one to four unique `supportingSourceIds` and an explanation of one to 320 characters.
+
+## Passport base tools
+
+### `get_business_passport`
+
+- **Route:** `/business/rwenzori-harvest`
+- **Annotation:** `readOnlyHint: true`
+- **Input:** exact empty object
+- **Authority:** the same hydrated `PassportVersion` rendered in the visible page
+- **Output:** version/published time, accepted contact and capabilities, current offerings, representative-attestation wording, evidence wording, and fictional-data limitation
+
+It does not scrape the page or return source evidence.
 
 ### `search_current_offerings`
 
-- **Availability:** base profile lifecycle
+- **Route:** Passport
 - **Annotation:** `readOnlyHint: true`
-- **Input:** optional `query` (120 chars), `destinationCountry` (80 chars), `privateLabelRequired` (boolean), and `maxResults` (schema 1–5)
-- **Output:** `{ count, offerings }`, where each result contains product ID, name, short description, MOQ, private-label status, evidence state, and last-confirmed date
-- **Side effect:** metadata-only activity entries
+- **Input:** optional `query` (120 characters), `destinationCountry` (80), `privateLabelRequired` (boolean), and whole-number `maxResults` (1–5)
+- **Output:** Passport version, result count, and compact offering records
 
-Runtime logic clamps result count to 1–5 even if a caller bypasses the schema. It excludes seasonal, discontinued, unknown, and insufficiently evidenced products.
+Search includes only `CURRENTLY_AVAILABLE` products. When a destination is supplied, products are eligible only for `SUPPORTED` or `AVAILABLE_BY_INQUIRY`; the returned `destinationStatus` preserves that distinction. Private-label filtering uses the published product value. Result count is both schema-bounded and runtime-validated.
 
 ### `prepare_business_inquiry`
 
-- **Availability:** base profile lifecycle
+- **Route:** Passport
 - **Annotations:** `readOnlyHint: false`, `untrustedContentHint: true`
-- **Required input:** `productId`, positive whole-number `quantity`, `destinationCountry`, `requestSamples`, and `privateLabel`
-- **Optional input:** `buyerCompany`, `buyerName`, `buyerEmail`, and `questions`
-- **Effect:** sanitizes/bounds inputs, applies them to the current visible draft, highlights agent-supplied fields, revokes any earlier approval, saves to IndexedDB, scrolls to the form, focuses the review UI, and returns validation/missing-field state
-- **Non-effect:** it never calls the submission API
+- **Required:** published `productId`, positive whole-number `quantity`, destination, `requestSamples`, and `privateLabel`
+- **Optional:** buyer company/name/email and questions
+- **Effect:** updates/highlights the visible form, saves the draft to IndexedDB before returning, scrolls/focuses the review UI, and reports validation/missing fields
+- **Non-effect:** never approves or submits
 
-The tool keeps the existing human-owned idempotency key. If a product ID is not currently eligible for inquiry, preparation rejects it. Buyer identity stays optional at the agent boundary so the supplied challenge prompt can prepare a partial, visibly invalid draft; a person must complete those fields before approval is enabled.
+Buyer identity fields are intentionally optional at the tool boundary so the agent can prepare the commercial request while the human supplies their identity in the visible form.
 
-The browser agent can prepare values, but the human remains authoritative: editing a field removes its highlight and revokes approval.
+Before applying anything, runtime code verifies that the product is current in the hydrated Passport, the destination is supported or available by inquiry, the requested private-label option is published, any email is syntactically valid, and no extra keys are present.
+
+## Conditional submission tool
 
 ### `submit_approved_inquiry`
 
-- **Availability:** dynamically registered only while `approved && valid`
+- **Route:** Passport
 - **Annotation:** `readOnlyHint: false`
-- **Input:** empty object
-- **Effect:** checks the latest approval and validation state, reuses the current visible draft, checks for a device-local receipt, rejects offline submission, or POSTs to `/api/inquiries`
-- **Output:** reference, `SUBMITTED` status, and duplicate flag
+- **Input:** exact empty object
+- **Availability:** hydrated + valid + explicitly approved + approval fingerprint equals current fingerprint
+- **Execution:** repeats every authority check, then calls the same submission function as the visible button
 
-It is deliberately absent at page load. It is also absent after an agent prepares a draft, because preparation always clears approval.
+The fingerprint contains:
 
-## Dynamic registration with `AbortController`
+- Passport version ID;
+- every visible inquiry field;
+- idempotency key.
 
-Current WebMCP registration accepts an `AbortSignal`; aborting it unregisters the associated tool. StillHere uses that lifecycle rather than leaving a permanently registered submit action with an internal “permission denied” branch only.
+Any field edit, draft-key change, Passport-version change, invalidation, or approval removal changes eligibility. The submit effect aborts the old registration. Even a caller retaining the old executor fails because `execute()` reads and compares current authority again. `performSubmit()` independently repeats the fingerprint and Passport-aware inquiry validation.
 
-Conceptually, the submit effect is:
+Conceptually:
 
 ```ts
+const submitEligible =
+  hydrated &&
+  approved &&
+  valid &&
+  approvalFingerprint === currentFingerprint;
+
 useEffect(() => {
-  if (!hasWebMcp() || !approved || !valid) return;
+  if (!hasWebMcp() || !submitEligible) return;
 
   const controller = new AbortController();
-  void document.modelContext!.registerTool(submitTool, {
+  void document.modelContext!.registerTool(submitDefinition, {
     signal: controller.signal,
   });
 
   return () => controller.abort();
-}, [approved, valid]);
+}, [submitEligible, currentFingerprint]);
 ```
 
-The implemented version also records availability/failure in the visible activity panel and updates `submitToolAvailable` for the lifecycle indicator.
+## Strict runtime validation
 
-The sequence is:
+JSON Schema helps an agent choose arguments; it is not treated as a security boundary. Runtime parsing also:
+
+- rejects null, arrays, primitives, and unexpected object keys;
+- rejects overlong strings rather than silently truncating them;
+- requires finite numbers and whole numbers where specified;
+- checks proposal field/action/value combinations;
+- rejects duplicate proposal fields and fields with pending proposals;
+- verifies every cited source exists and contains a claim for the proposed field;
+- requires every `USE_VALUE` value to exist verbatim in a cited source;
+- prevents the unsupported certification claim from being proposed as current;
+- verifies Passport destination and private-label authority;
+- rechecks exact-draft submission authority at execution.
+
+Human-only metadata such as accepted/resolved state cannot be injected through the staging schema.
+
+## Human/agent sequence
 
 ```mermaid
 sequenceDiagram
-    participant Human
-    participant UI as Visible form
-    participant Hook as useWebMcp
-    participant Browser as document.modelContext
     participant Agent
+    participant Ledger as /recover Ledger
+    participant Human
+    participant IDB as IndexedDB v2
+    participant Profile as Passport route
 
-    Hook->>Browser: register 3 base tools (base AbortSignal)
-    Agent->>Browser: prepare_business_inquiry(input)
-    Browser->>UI: populate + highlight + persist draft
-    Human->>UI: edit and review
-    Human->>UI: check approval
-    UI->>Hook: approved=true, valid=true
-    Hook->>Browser: register submit_approved_inquiry (fresh AbortSignal)
-    Agent->>Browser: submit_approved_inquiry({})
-    Browser->>UI: recheck latest approval and visible draft
-    UI-->>Agent: compact demo receipt
-    Human->>UI: edit field or clear approval
-    UI->>Hook: approved=false or valid=false
-    Hook->>Browser: abort signal; submit tool removed
+    Agent->>Ledger: inspect_business_truth({})
+    Ledger-->>Agent: bounded counts + needsReview
+    Agent->>Ledger: stage_claim_resolutions({ proposals })
+    Ledger->>IDB: save AGENT_PROPOSED records
+    Ledger-->>Agent: humanReviewRequired=true, published=false
+    Human->>Ledger: accept / edit / reject / unresolved
+    Human->>Ledger: Publish Business Passport
+    Ledger->>IDB: atomic version + published pointer
+    Human->>Profile: navigate
+    Profile->>IDB: hydrate published Passport + draft
+    Agent->>Profile: get_business_passport({})
+    Agent->>Profile: search_current_offerings(...)
+    Agent->>Profile: prepare_business_inquiry(...)
+    Profile->>IDB: save visible draft
+    Human->>Profile: edit + approve exact fingerprint
+    Profile-->>Agent: submit_approved_inquiry now registered
+    Agent->>Profile: submit_approved_inquiry({})
 ```
 
-Base tools use a separate controller and are removed when the page unmounts.
+## Exact test procedure
 
-## State freshness
+### Browser setup
 
-React callbacks are copied into a ref on every render. Registered tool functions call `callbacks.current`, so they see the latest approval, validation, form, submission, and activity behavior without repeatedly registering the three base tools.
+1. Use ChatGPT's in-app browser as described by the [OpenAI challenge page](https://openai.com/webmcp-challenge/), or enable `chrome://flags/#enable-webmcp-testing` in a compatible Chrome build and relaunch.
+2. Start the app with `npm run dev`.
+3. Use the two-step footer reset to clear earlier demo Ledger/Passport/draft/receipt state.
 
-Submission also validates at execution time. Dynamic availability communicates capability to the agent; it is not the only enforcement boundary.
+### Ledger route
 
-## Agent Activity
+1. Open `/assessment`, assess the seeded fictional URL, and select **Review recovered evidence**.
+2. On `/recover`, wait for **WebMCP ready**.
+3. Confirm discovery shows `inspect_business_truth` and `stage_claim_resolutions`, not Passport tools.
+4. Ask: **“Inspect the recovered business truth.”** Expect four sources, three conflicts, four fields needing review, and one unsupported claim in the seeded initial state.
+5. Call `stage_claim_resolutions` with the four exact source-backed proposals listed in the README/demo script.
+6. Confirm the visible queue changes but the Passport preview does not treat proposals as human decisions.
+7. Attempt an extra key, unknown source, invented value, duplicated field, second pending proposal, or certification `USE_VALUE`; each must fail.
+8. Use visible human controls to resolve the proposals, then publish Passport v2.
 
-The profile records up to 12 recent entries in React state. Entries include:
+### Passport route
 
-- tool name;
-- lifecycle action (`available`, `called`, `completed`, or `failed` in the current flow);
-- human-readable summary;
-- timestamp;
-- read-only/state-changing classification;
-- whether approval is required.
+1. Confirm the route displays the published version and three base tools.
+2. Call `get_business_passport` and verify the returned version equals the visible version.
+3. Search `instant` with destination `Japan` and private label required; after the recommended v2 resolutions, expect Instant Coffee with `destinationStatus: "AVAILABLE_BY_INQUIRY"`.
+4. Call `prepare_business_inquiry` for `drip-coffee-10pack`, quantity `2000`, destination `Japan`, samples/private label true, leaving buyer identity fields absent.
+5. Confirm the visible draft updates, missing buyer fields remain, and submission is absent.
+6. Enter fictional buyer company/name/email and check approval. Confirm the submit tool appears.
+7. Change any field and confirm approval clears and the submit tool is removed.
+8. Reapprove and call `submit_approved_inquiry`. Confirm the visible fictional receipt.
 
-It intentionally does not log tool parameters or buyer field values. This is an in-page explanation surface, not durable analytics, an audit log, or telemetry.
+Where supported, DevTools can inspect the current route names:
 
-## Exact manual test
+```js
+(await document.modelContext.getTools()).map((tool) => tool.name)
+```
 
-### 1. Browser setup
-
-Use ChatGPT's in-app browser as described by the [OpenAI challenge FAQ](https://openai.com/webmcp-challenge/), or enable Chrome's local testing flag:
-
-1. Navigate to `chrome://flags/#enable-webmcp-testing`.
-2. Set it to **Enabled**.
-3. Relaunch Chrome.
-4. Start the app with `npm run dev`.
-5. Open `http://localhost:3000/business/rwenzori-harvest`.
-
-### 2. Discovery and read-only tools
-
-1. Confirm the page says **WebMCP ready** and **3 tools available**.
-2. Expect the visible lifecycle indicator to report three base tools and no `submit_approved_inquiry`.
-3. Ask: **“Is this business currently active, and find a product suitable for private-label distribution in Japan.”**
-4. Expect the status tool plus the offering search. The expected Japan/private-label product IDs are:
-
-   - `roasted-arabica-1kg`
-   - `ground-arabica-250g`
-   - `drip-coffee-10pack`
-
-5. Confirm the Agent Activity panel shows calls/completions without buyer data.
-
-### 3. Prepare and human edit
-
-1. Ask: **“Prepare an inquiry for 2,000 units of drip-coffee-10pack, requesting samples, private-label packaging and delivery information for Kobe, Japan.”**
-2. Expect the browser agent to call `prepare_business_inquiry`.
-3. Confirm the visible form scrolls into view, supplied fields are highlighted, the three buyer fields remain visibly required, and the status remains a local draft.
-4. Confirm `submit_approved_inquiry` is still absent/locked.
-5. Enter fictional buyer company, name, and email values. Change quantity from `2000` to `5000` and add **“Please include Japanese labelling support.”**
-6. Confirm the human-edited fields no longer have the agent highlight.
-
-### 4. Approval lifecycle and submission
-
-1. Check the explicit approval checkbox.
-2. Confirm the visible lifecycle indicator shows `submit_approved_inquiry` as available.
-3. Clear the checkbox. Confirm the tool disappears.
-4. Check approval again and ask: **“Submit the inquiry I approved.”**
-5. Expect a visible `SH-...` receipt and a completed activity entry.
-6. Confirm the result describes a demo acceptance, not an order/payment/delivery.
-
-### 5. Revocation and failure paths
-
-Before successful submission, check approval and then change any required field. Confirm approval clears and the tool is removed. Check approval again, switch DevTools Network to **Offline**, and attempt submission. Expect `SUBMISSION PENDING`, a clear “nothing was submitted” error, and no receipt. Reconnect and use **Retry now**.
-
-## Automated coverage
-
-Run:
+## Automated coverage snapshot
 
 ```bash
-npm run test
+npm test
 ```
 
-The unit tests cover feature detection, input boundary rejection, approval predicate behavior, product eligibility and result bounds, inquiry validation, idempotent receipts, and local persistence. They do not simulate a WebMCP-capable browser agent or assert React effect registration/unregistration end to end; those remain required manual/evaluation steps.
+At commit `96366cf`: **12 test files, 78 passing tests**.
 
-Chrome's [WebMCP eval guidance](https://developer.chrome.com/docs/ai/webmcp/evals) recommends deterministic tool tests alongside probabilistic evaluations for tool selection and full journeys. A submission-grade evaluation set should add direct, ambiguous, invalid, stale-product, approval-revocation, and offline prompts.
+The suite covers Ledger and Passport tool contracts, schema/runtime mismatches, invalid source/value proposals, human-authority preservation, Passport-qualified search/preparation, retained submit executor rejection, feature detection, domain rules, persistence migration/publication/reset, and API/assessment boundaries. It does not simulate a production browser agent, so the manual lifecycle test and probabilistic prompts still matter. Chrome's [WebMCP eval guidance](https://developer.chrome.com/docs/ai/webmcp/evals) recommends both deterministic tests and agent evaluations.
 
-## Known WebMCP constraints
+## Constraints
 
-- The standard and implementations are experimental and may change.
-- Tools are discoverable only after an agent visits the profile page.
-- WebMCP availability depends on a compatible browser/origin configuration.
-- The local TypeScript declaration covers only the subset used here; it is not a vendored canonical specification package.
-- The app has deterministic domain tests but no automated browser-agent evaluation harness yet.
-- A tool call receives structured browser-mediated input, but all consequential server trust still belongs at the application/API boundary.
+- The standard and browser implementations remain experimental.
+- Tools are ephemeral, route/tab-bound, and discoverable only after visiting the route.
+- The local TypeScript declaration covers the subset used by this app; it is not a vendored canonical spec package.
+- Agent Activity keeps only 12 in-memory metadata summaries and is not an audit log.
+- Browser-side Passport validation/fingerprinting is not authenticated server authorization. The demo inquiry route does not receive the Passport version.

@@ -1,160 +1,179 @@
 # Demo script (under three minutes)
 
+This script demonstrates all six route-scoped WebMCP tools while keeping every authority transition visible.
+
 ## Before recording
 
-1. Deploy the final commit over HTTPS or run it in a WebMCP-enabled local Chrome build.
-2. Open a fresh browser profile if you want the draft-persistence moment to be obvious.
-3. Confirm `npm run check` passes.
-4. Load `/business/rwenzori-harvest` online once and wait for **Profile ready** before any offline demonstration.
-5. Confirm the browser agent discovers the three base tools.
-6. Keep DevTools closed unless the recording specifically needs tool discovery or offline emulation.
-7. Do not enter real buyer information; all names and addresses below are fictional demo values.
+1. Use the deployed HTTPS app or a WebMCP-enabled local Chrome build.
+2. In the footer, select **Reset demo**, then **Confirm reset**. This clears device demo Ledger/Passport/draft/receipts but preserves Low Data and caches.
+3. If Low Data was previously on, turn it off from the Passport route before recording; reset intentionally preserves the preference.
+4. Confirm `npm run check` passes. At commit `96366cf`, the snapshot is 12 test files and 78 tests.
+5. Use only the fictional buyer values below.
 
-## 0:00–0:20 — Establish the problem
+## 0:00–0:18 — Problem and differentiation
 
 Open `/`.
 
 Say:
 
-> “An active business can have a stale website. Making that website machine-readable does not make its information true. StillHere establishes what is current first, then publishes a tiny surface for people and agents.”
+> “An active business can have a stale website. Making it agent-readable does not make its claims true. StillHere recovers source evidence, lets an agent stage explanations, and lets a human decide what becomes a versioned Business Passport.”
 
-Point to **The website may be outdated. The business isn't.** Select **Try Demo**.
+Point to **Recover → Reconcile → Approve → Publish → Transact** and select **Try Demo**.
 
-## 0:20–0:45 — Assess without overclaiming
+## 0:18–0:38 — Assessment and Source Evidence
 
-The assessment is prefilled with `https://legacy.rwenzoriharvest.example`.
-
-Select **Assess website**.
+The fictional URL is prefilled. Select **Assess website**.
 
 Say:
 
-> “This target is deterministic for a repeatable demo. The production form also accepts a public website through a bounded one-page observer: no JavaScript, subresources, linked-page crawl, or private-network access. It separates website condition from business condition.”
+> “The assessment separates website condition from business condition. The seeded path is deterministic; public URLs use a bounded one-page observer and never become trusted Ledger claims automatically.”
 
-Point to the latest visible update, zero confirmed-current products, three conflicts, and **Current business status: Not yet attested**.
+Point briefly to the stale-site result and the four **Recovered Evidence** cards: legacy website, catalogue, recent public evidence, and fictional representative. Select **Review recovered evidence**.
 
-## 0:45–1:05 — Recover and attest
+## 0:38–1:20 — Agent proposes; human decides
 
-Select **Recover & attest current information**.
-
-Move briskly through the six steps: identity, contacts, product status, capabilities, one primary workflow, and review. On the final screen say:
-
-> “Information Attestation confirms individual fictional demo facts. It is not identity verification, KYC, a registry check, or certification auditing.”
-
-Select **Publish demo profile**.
-
-## 1:05–1:30 — Read with WebMCP
-
-On the profile, show the active/attested date, evidence badge, current catalogue, **WebMCP ready**, and three available tools.
-
-Ask the browser agent exactly:
-
-> “Is this business currently active, and find a product suitable for private-label distribution in Japan.”
-
-Expected behavior:
-
-1. `get_business_status` returns `ACTIVE`, confirmation date `2026-08-26`, `OWNER_CONFIRMED`, and compact capabilities.
-2. `search_current_offerings` returns the three current Japan/private-label candidates: roasted beans, ground coffee, and drip packs.
-3. Agent Activity shows read-only calls without buyer field values.
-
-Say:
-
-> “The agent uses structured current data, not a scrape of the legacy page.”
-
-## 1:30–2:05 — Prepare together
-
-Ask exactly:
-
-> “Prepare an inquiry for 2,000 units of drip-coffee-10pack, requesting samples, private-label packaging and delivery information for Kobe, Japan.”
-
-Expected behavior:
-
-- `prepare_business_inquiry` populates the visible form;
-- supplied fields are highlighted;
-- the draft is saved to this device;
-- the three required buyer fields remain empty for human completion;
-- nothing is submitted;
-- `submit_approved_inquiry` remains locked.
-
-Enter fictional buyer details (`Kobe Coffee Trading`, `Aiko Mori`, and `aiko@example.com`). Change quantity from `2000` to `5000`. Add:
-
-> “Please include Japanese labelling support.”
-
-Point out that human edits remove the agent highlight and remain authoritative.
-
-## 2:05–2:35 — Approval creates capability
-
-Say:
-
-> “The final tool does not exist from page load. A valid visible form is not enough; the human must explicitly approve it.”
-
-Check **I have reviewed this inquiry and approve submission.** Point to `submit_approved_inquiry — Available to your agent`.
-
-Optionally clear approval once to show the tool disappearing, then check it again.
+On `/recover`, show **Source Evidence**, **Continuity Ledger**, the live accepted-facts preview, and the two route tools.
 
 Ask:
 
-> “Submit the inquiry I approved.”
+> “Inspect the recovered business truth.”
 
-Expected behavior:
+Expected: `inspect_business_truth` returns bounded counts, four review fields, and no raw source documents.
 
-- execution rechecks approval and validation;
-- the page calls the same-origin demo API with the draft's idempotency key;
-- a visible `SH-...` receipt appears;
-- the activity panel marks the state-changing call as human-approval required.
-
-Say:
-
-> “This receipt is only a demo acceptance. No email, order, payment, or external delivery occurs.”
-
-## 2:35–2:55 — Low-data/offline honesty
-
-Toggle **Low Data**. Point to the simplified profile and Data Footprint panel.
-
-Say:
-
-> “The figures come from this browser's Resource Timing entries. A zero can mean cached or unavailable transfer detail; we claim no invented benchmark, and the switch cannot unload bytes already transferred.”
-
-If time allows, switch DevTools Network to **Offline** only after the profile has loaded online. Refresh the profile and show the offline/cached status. With a new unsent draft, attempt submission and show `SUBMISSION PENDING` rather than false success.
-
-## 2:55–3:00 — Close
-
-Say:
-
-> “StillHere is a continuity layer: recover what is true, make currentness explicit, and let people and agents complete one useful workflow together.”
-
-## Expected tool arguments
-
-An agent may phrase optional questions differently. The central prepared values should be equivalent to:
+Then ask the agent to call `stage_claim_resolutions` with:
 
 ```json
 {
-  "productId": "drip-coffee-10pack",
-  "quantity": 2000,
-  "destinationCountry": "Japan",
-  "requestSamples": true,
-  "privateLabel": true,
-  "questions": "Please provide delivery information for Kobe, Japan."
+  "proposals": [
+    {
+      "field": "tradePhone",
+      "action": "USE_VALUE",
+      "proposedValue": "+256 780 240 826",
+      "supportingSourceIds": ["representative-2026", "public-evidence-2026"],
+      "explanation": "Use the latest representative and public value."
+    },
+    {
+      "field": "instantCoffeeMoq",
+      "action": "USE_VALUE",
+      "proposedValue": 2500,
+      "supportingSourceIds": ["representative-2026"],
+      "explanation": "Use the representative-attested MOQ."
+    },
+    {
+      "field": "japanAvailability",
+      "action": "USE_VALUE",
+      "proposedValue": "AVAILABLE_BY_INQUIRY",
+      "supportingSourceIds": ["representative-2026"],
+      "explanation": "Preserve the representative's qualified availability."
+    },
+    {
+      "field": "certification",
+      "action": "EXCLUDE",
+      "supportingSourceIds": ["legacy-website-2021", "representative-2026"],
+      "explanation": "The legacy certification wording lacks current support."
+    }
+  ]
 }
 ```
 
-The human then changes `quantity` to `5000` and adds the labelling requirement before approval.
+Say:
 
-## Recovery plan if the agent varies
+> “The agent staged proposals; it accepted and published nothing.”
 
-- If the agent does not call a tool, state the tool name explicitly and repeat the request.
-- If WebMCP shows unsupported, verify that the recording uses ChatGPT's in-app browser or Chrome with `chrome://flags/#enable-webmcp-testing` enabled, then relaunch and reopen the profile.
-- If the submit tool is absent, confirm all required fields are valid and approval is checked.
-- If the profile is not available offline, reconnect, revisit the profile, wait for **Profile ready**, then retry. Offline-first is not supported.
-- If a receipt repeats, the browser is correctly reusing the existing receipt for that draft key. Edit a field after submission to create a new key.
+As the human, select **Accept** for phone, MOQ, and Japan qualification, then **Accept exclusion** for certification. Point to the live preview and say:
+
+> “Unresolved or rejected facts are omitted. Available by inquiry is not upgraded to supported.”
+
+Select **Publish Business Passport**.
+
+## 1:20–1:53 — Published Passport tools
+
+On the profile, point to **Business Passport Version 2** (or a later version if the device has retained history) and three available tools.
+
+Ask:
+
+> “Read this Business Passport, find current private-label offerings for Japan, then prepare an inquiry for 2,000 units of drip-coffee-10pack to Japan, requesting samples and private-label packaging. Leave buyer identity fields blank.”
+
+Expected calls:
+
+1. `get_business_passport` returns the same visible version.
+2. `search_current_offerings` returns current Passport offerings and preserves Instant Coffee as `AVAILABLE_BY_INQUIRY`.
+3. `prepare_business_inquiry` fills/highlights the visible form, saves the draft, and reports buyer company/name/email as missing.
+
+Say:
+
+> “The agent acts on the published Passport, not the old website. Preparation is visible and cannot approve or submit.”
+
+## 1:53–2:28 — Exact-draft human approval
+
+Enter:
+
+- Buyer company: `Kobe Coffee Trading`
+- Name: `Aiko Mori`
+- Email: `aiko@example.com`
+
+Change quantity from `2000` to `5000` and add:
+
+> “Please include Japanese labelling support.”
+
+Point out that human-edited fields lose their agent highlight.
+
+Check **I have reviewed this inquiry and approve submission.** Point to the newly available `submit_approved_inquiry`.
+
+Optionally change one field to show approval clearing and the tool being removed, then restore/reapprove.
+
+Ask:
+
+> “Submit the exact inquiry I approved.”
+
+Expected: a visible `SH-...` receipt and an activity item marked human approval required.
+
+Say:
+
+> “This is a process-local demo acceptance only. It sends no email, order, payment, or external message.”
+
+## 2:28–2:50 — Low Data and offline honesty
+
+Toggle **Low Data** and show Data Footprint.
+
+Say:
+
+> “Low Data is a global stored preference. Resource Timing reports this visit; zero can mean cache or unavailable detail, and the toggle cannot unload bytes already transferred.”
+
+If recording offline behavior, first load both `/recover` and the Passport online and wait for the service worker. Switch DevTools Network to offline:
+
+- `/recover` can fall back to its cached shell and restore the device Ledger;
+- the Passport can fall back to its cached shell;
+- a new inquiry attempt becomes `SUBMISSION PENDING`, never falsely submitted.
+
+## 2:50–3:00 — Close
+
+Say:
+
+> “StillHere keeps evidence, proposals, human authority, and action separate: recover what may be true, reconcile it visibly, publish accepted facts, then transact with explicit approval.”
+
+## Recovery plan
+
+- **Ledger tools absent:** wait for device hydration and confirm the route says WebMCP ready.
+- **Proposal rejected:** use the exact field/value/source combinations above; values must occur in cited claims.
+- **Proposal already pending:** complete or reset the earlier proposal; duplicate pending fields are rejected.
+- **Passport still version 1:** resolve proposals and use the human **Publish Business Passport** button; agents cannot publish.
+- **Submit tool absent:** fill all required buyer fields and approve the exact visible draft.
+- **Submit tool disappears:** a field, idempotency key, validity state, approval, or Passport version changed; review and reapprove.
+- **Instant Coffee demo submission fails:** use the script's `drip-coffee-10pack` transaction. The process-local API still validates seeded product rules and does not receive Passport v2 authority.
+- **Offline shell missing:** reconnect, visit the target route online, and retry. Offline-first is not supported.
+- **Repeated receipt:** an exact same-device or same-process retry is being deduplicated. Edit after submission to create a new draft key.
 
 ## Claims to avoid
 
-Do not say that the demo:
+Do not claim that StillHere:
 
-- verified a real business, owner, domain, legal entity, registry, or certification;
-- crawled or secured an arbitrary website;
-- sent an email or inquiry to a real recipient;
-- guarantees cross-device or cross-instance idempotency;
+- verified a real business, representative, domain, legal entity, registry, or certification;
+- treats public HTML as trusted current information;
+- lets an agent accept resolutions or publish a Passport;
+- creates a signed, server-hosted, or cross-device credential;
+- guarantees durable/global idempotency or delivery;
+- sends the inquiry to a real recipient;
 - works offline before a successful online visit;
-- measured a universal low-data savings percentage;
+- reports a measured universal data-saving percentage;
 - supports WebMCP in every browser.

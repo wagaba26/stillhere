@@ -1,155 +1,177 @@
 # Security and privacy model
 
-StillHere is a public challenge demonstration, not a production identity-verification or inquiry-delivery service. Its core scope remains narrow: one fictional continuity profile, a bounded one-page public-site observer, fixed demo product data, four explicit page tools, no account system, and no real external inquiry delivery.
+StillHere is a public WebMCP challenge demonstration, not a production identity, credential, or inquiry-delivery service. Its safety model separates four kinds of authority:
+
+1. **Source Evidence** can supply candidate claims.
+2. **Agent proposals** can organize and explain those claims.
+3. **Human resolutions** decide what is accepted, edited, rejected, or unresolved.
+4. **A published Passport version** supplies the visible/agent-facing transaction boundary.
+
+No earlier layer automatically gains the authority of a later one.
 
 ## Trust boundaries
 
 | Boundary | Trusted for | Not trusted for |
 | --- | --- | --- |
-| Seeded demo data | Reproducible fictional UI and domain tests | Real-world business claims |
-| Legacy/public source concept | Candidate information and conflict display | Tool definitions, currentness, code, or instructions |
-| Supplied assessment URL and remote HTML | A request to observe public page signals | Authorization, trusted instructions, business identity, currentness, or executable content |
-| Browser agent input | A proposal to validate and display | Authorization or proof of human intent |
-| Human approval checkbox | Current in-page approval signal | Durable identity, authentication, or non-repudiation |
-| Browser IndexedDB | Same-device draft/receipt convenience | Durable, encrypted, cross-device storage |
-| Demo API process | Returning a temporary receipt | External delivery or globally durable acceptance |
-| Agent Activity panel | Current-page explanation | Audit, analytics, or compliance logging |
+| Seeded source records | Reproducible fictional conflict scenarios | Real business facts or instructions |
+| Supplied assessment URL/HTML | Conservative one-page website signals | Identity, currentness, executable content, or Ledger claims |
+| Browser agent input | Bounded proposal or draft preparation after validation | Human resolution, publication, or submission authority |
+| Human Ledger controls | Device-local claim resolution/publication intent | Authentication, representative identity, or non-repudiation |
+| Passport snapshot | Current device-local application authority | Signed credential, registry proof, or server truth |
+| Approval fingerprint | Exact visible draft/version match in the current tab | Authenticated authorization outside the browser |
+| IndexedDB/localStorage | Same-browser continuity and compatibility | Durable, encrypted, cross-device storage |
+| Assessment process | Bounded outbound observation | Distributed crawling or durable rate enforcement |
+| Inquiry process | Temporary payload-bound receipt deduplication | Durable delivery, global exactly-once behavior, or Passport authorization |
+| Agent Activity | Current-page explanation | Audit, compliance, analytics, or telemetry |
 
-## Implemented controls
+## Bounded public-page assessment
 
-### Bounded public-page observation instead of crawling
+`POST /api/assessments` retains a deterministic fictional result and can observe one public page. The route:
 
-`/assessment` retains the deterministic `https://legacy.rwenzoriharvest.example` result and can now submit another public URL to `POST /api/assessments`. The route retrieves one HTML response only; it never renders or executes the page, loads its subresources, follows its links, or returns its source HTML to the browser.
+- requires `application/json` and streams at most 4 KB of request body;
+- rejects cross-origin browser requests when an `Origin` header is present;
+- accepts HTTP(S), strips fragments, rejects credentials, limits URLs to 2,048 characters, and permits only ports 80/443;
+- blocks local/reserved/test hostnames and private, loopback, link-local, carrier-grade NAT, documentation, multicast, transition, and reserved IP ranges;
+- requires every DNS answer to be public, then pins one validated address for the connection;
+- preserves the original Host header and HTTPS server name/certificate validation;
+- repeats URL/DNS/IP validation for each redirect and allows at most three;
+- applies a nine-second total network deadline and a 750 KB uncompressed HTML limit;
+- requests identity encoding and rejects unexpected compression/non-HTML content;
+- never runs page JavaScript, loads subresources, follows page links, sends cookies, bypasses authentication/CAPTCHA, or returns source HTML to the browser;
+- returns only conservative reachability, year, contact-route, Product-schema, transfer, and redirect signals.
 
-The server-side boundary:
+The hosting provider still makes an identified outbound request (`StillHereAssessment/1.0`). Process-local limits allow eight requests per address per minute, at most six active assessments, and a bounded in-memory address map. They are not distributed controls and reset with the process.
 
-- accepts only HTTP(S), strips fragments, rejects embedded credentials, and permits only ports 80/443;
-- blocks local/reserved/test hostnames and private, loopback, link-local, carrier-grade NAT, documentation, multicast and reserved IP ranges;
-- requires all DNS answers to be public, then pins a validated address into the connection to reduce DNS-rebinding risk;
-- repeats parsing, DNS/IP validation and connection pinning for every redirect and permits at most three redirects;
-- preserves the original Host header and TLS server name, so certificate validation remains active;
-- enforces a nine-second total network budget and a 750 KB uncompressed HTML limit;
-- requests identity encoding, rejects non-HTML and unexpected compressed responses, and returns only conservative derived signals;
-- requires same-origin browser requests and applies process-local per-address and concurrency limits.
+Live observations never automatically enter the fictional Continuity Ledger or influence tool definitions.
 
-The remote server still sees a request from the hosting provider with the identified `StillHereAssessment/1.0` user agent. No robots bypass, authentication, CAPTCHA handling, arbitrary headers, cookies, or browser session is attempted.
+## Source and proposal isolation
 
-### Fixed mapping from attested data to tools
+Tool names, schemas, descriptions, and callbacks are constant application code. Source text is rendered as untrusted evidence; `inspect_business_truth` returns counts/field names instead of raw documents.
 
-Tool names, descriptions, schemas, and execution callbacks are authored in source. Legacy/public text is never interpolated into executable tool definitions. The current demo catalogue is an imported TypeScript object, not fetched page content.
+`stage_claim_resolutions` uses JSON Schema plus runtime checks. It permits only four review fields, bounded field-specific actions/values, one to four unique known sources, and a bounded explanation. A cited source must contain a claim for the field, and `USE_VALUE` must exactly match a value in a cited claim. The unsupported certification scenario can only be proposed as exclusion. Unknown keys, human-only metadata, duplicate fields, invalid batches, and already-pending fields are rejected.
 
-### Progressive enhancement and least capability
+Staging only appends `AGENT_PROPOSED`. Human decisions are separate states and are never overwritten by a later proposal. Agents have no accept/edit/reject/unresolved/publish tool.
 
-Only three tools are available at profile load, two of them read-only. `prepare_business_inquiry` may change visible local state but cannot submit. The consequential `submit_approved_inquiry` is registered only during a valid, explicitly approved UI state.
+## Passport publication
 
-Registration uses an `AbortSignal`. Editing any field clears approval; clearing approval or invalidating the form triggers React cleanup and aborts the signal, unregistering the tool. Tool execution independently rechecks the latest approval and validation state.
+`derivePassport()` reads accepted/edited human resolutions only. Unresolved, rejected, and unsupported values are omitted. Publication can proceed with omissions; it does not coerce uncertain fields into values.
 
-This follows WebMCP's direct, browser-mediated model described by the [WebMCP proposal](https://github.com/webmachinelearning/webmcp) and Chrome's [security and permissions overview](https://developer.chrome.com/docs/ai/webmcp#security-and-permissions). Browser mediation does not replace application authorization.
+The first new-flow publication is v2 or later. A new deep-cloned snapshot and the Continuity Ledger's `publishedVersionId` are written in one IndexedDB transaction. The application creates a new version record for future publications rather than mutating the active snapshot.
 
-### Input boundaries
+This is still device-local application state. It is not signed, authenticated, remotely attested, tamper-resistant against the device owner, or published to a durable server.
 
-WebMCP tools set `additionalProperties: false` and size/type constraints in their JSON Schemas. Runtime helpers also:
+## Safe legacy compatibility
 
-- reject non-object input;
-- trim and cap strings;
-- reject non-finite numbers;
-- require quantity to be a positive integer;
-- validate required fields again after preparation.
+The profile does not trust arbitrary old localStorage JSON. `readAttestationSnapshot()` validates nested identity strings, contact/product state enums, capability booleans, market strings, workflow enum, and timestamp before conversion.
 
-`search_current_offerings` clamps result count to 1–5 even if schema validation is bypassed. It returns only current, evidence-eligible products.
+If valid and no IndexedDB Passport is published, the converter creates compatibility Passport v1 and intentionally excludes Instant Coffee, whose new resolution dimensions are absent from the old schema. Invalid/missing legacy state leaves the accepted-facts-only baseline v1 in place.
 
-The inquiry API:
+## Six route tools and lifecycle
 
-- rejects a declared body over 20,000 bytes;
-- requires a nonempty `Idempotency-Key` no longer than 160 characters;
-- parses JSON with an explicit error response;
-- requires the header and reviewed draft key to match;
-- repeats domain validation;
-- returns `Cache-Control: no-store` on a newly accepted demo receipt.
+Ledger tools and Passport tools are route-scoped and wait for device hydration. Each registration is bound to an `AbortSignal` and removed on navigation.
 
-The `Content-Length` check alone is not a streaming hard limit when the header is missing or inaccurate. A production deployment should enforce request-size limits at the platform/proxy and parser boundaries too.
+The conditional submit tool requires:
 
-The assessment API independently reads its JSON body as a stream with a 4 KB hard limit, rejects cross-origin browser requests, and never reflects remote HTML. Its rate limiter is deliberately bounded in memory but is process-local and therefore not a distributed abuse control.
+- hydrated Passport and draft;
+- valid Passport-aware visible inquiry;
+- explicit human approval;
+- approval fingerprint equal to current fingerprint.
 
-### Idempotency and honest failure
+The fingerprint covers Passport version ID, all inquiry fields, and the idempotency key. Any relevant change revokes availability. Execution rechecks current authority, and `performSubmit()` checks again before network action. Retaining a reference to an old executor does not retain authority.
 
-The browser creates a draft key and stores successful receipts in IndexedDB. Before a request, it checks for a receipt with the same key. The API also keeps a process-local `Map`, binds an accepted key to a SHA-256 hash of the reviewed payload, returns the earlier receipt for an exact in-process retry, and rejects reuse of the key with changed payload.
+Preparation cannot approve or submit. Buyer identity fields can be left empty by the agent for human completion. Destination and private-label requests must be published by the hydrated Passport.
 
-Offline or failed requests save the draft and set `SUBMISSION PENDING`; they never fabricate a receipt. No Background Sync or automatic retry runs without a visible user action.
+Browser mediation and exact-state checks are useful UX controls, not authenticated server authorization.
 
-These controls reduce accidental duplicates in the demo but do not guarantee distributed exactly-once behavior. Server restarts, another deployment instance, another device, or cleared site data can bypass the local ledgers.
+## IndexedDB v2 and scoped reset
 
-### Response and browser headers
+Database `stillhere-continuity` version 2 contains `drafts`, `submissions`, `continuity`, and `passportVersions`. The upgrade adds new stores without deleting v1 draft/receipt records. A blocked upgrade fails visibly.
 
-`next.config.ts` applies:
+The footer reset is intentionally two-step. Its IndexedDB transaction deletes the named demo draft, demo receipt store, Rwenzori Harvest Ledger, and only that business's Passport versions. It then removes the legacy attestation key. It preserves Low Data and Cache Storage and does not affect process-local API state. It is not equivalent to clearing all origin data.
+
+## Inquiry data and idempotency
+
+The visible inquiry contains product, quantity, destination, sample/private-label flags, buyer company/name/email, questions, idempotency key, and update time.
+
+1. React holds current state.
+2. Drafts save to IndexedDB after a 180 ms debounce; agent preparation saves before returning.
+3. Human approval captures the exact draft + Passport version fingerprint.
+4. Submission sends the draft to same-origin `/api/inquiries`.
+5. A successful receipt is cached by idempotency key in IndexedDB.
+
+The route:
+
+- rejects a declared `Content-Length` over 20,000 bytes;
+- requires an `Idempotency-Key` of at most 160 characters matching the body;
+- parses JSON and applies seeded inquiry validation;
+- hashes the reviewed commercial payload with SHA-256;
+- returns the same receipt for an exact same-key/same-payload retry in the same process;
+- rejects same-key/different-payload reuse with HTTP 409;
+- returns a new fictional receipt with HTTP 202 and `Cache-Control: no-store`.
+
+Important limits:
+
+- the `Map` is process-local, resets on restart, and is not shared across instances;
+- the 20 KB check relies on declared `Content-Length`, not a streamed hard cap;
+- after JSON parsing, the route casts the body to `InquiryDraft` and does not run a complete structural schema before domain validation; production must reject missing/wrong-typed fields without allowing type-assuming code to fail;
+- the route validates against seeded demo products and does not receive/revalidate the published Passport version, destination matrix, or browser approval fingerprint;
+- no inquiry body/receipt is durably stored server-side;
+- no external recipient is contacted.
+
+Offline or network/API failure saves the draft and shows `SUBMISSION PENDING`. There is no Background Sync or invisible retry. A browser receipt can prevent a same-device retry, but browser storage is evictable and user-controlled.
+
+Use only fictional buyer data in the public demo.
+
+## Service worker and Low Data
+
+The service worker registers on HTTPS or localhost. It excludes API, cross-origin, non-GET, RSC, and prefetch requests. It never caches API submissions.
+
+It precaches `/recover`, the Passport, `/offline`, manifest, and icon with `Promise.allSettled`; a successful worker install does not prove every item was cached. Documents are network-first with cached route fallback. Previously fetched Next static assets are cache-first. Cached content and IndexedDB are not confidential storage and can be evicted or cleared.
+
+The root preference hydrator applies Low Data across routes. The preference is localStorage, not a privacy consent control. The UI's Resource Timing values can be absent/cached and must not be treated as a security or performance guarantee.
+
+## Response headers
+
+General routes receive:
 
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: SAMEORIGIN`
 - `Referrer-Policy: strict-origin-when-cross-origin`
 
-`/sw.js` additionally receives an explicit JavaScript content type, no-store cache policy, and `Content-Security-Policy: default-src 'self'; script-src 'self'`.
+`/sw.js` additionally receives a JavaScript content type, no-store/must-revalidate cache policy, and `Content-Security-Policy: default-src 'self'; script-src 'self'`.
 
-These are useful baseline controls, not a complete application Content Security Policy. The general application responses do not currently set a CSP, HSTS, Permissions Policy, or COOP/COEP headers in source.
+The general application currently has no site-wide CSP, HSTS, explicit `tools` Permissions Policy, or COOP/COEP headers in source. Current Chrome documentation notes WebMCP's origin-isolation and Permissions Policy requirements; verify the deployed host/browser combination against [Chrome's security guidance](https://developer.chrome.com/docs/ai/webmcp#security-and-permissions).
 
-### Data minimization
+## Non-controls
 
-Agent Activity retains at most 12 entries in React state and records summaries rather than buyer field values. There is no third-party analytics or telemetry dependency.
+The build does not provide:
 
-The business profile uses system fonts and no remote media, map, social embed, or advertising script. This limits passive third-party data disclosure.
+- accounts, authentication, organization roles, or representative verification;
+- KYC, registry, domain/DNS/email challenge, legal status, or certification verification;
+- signed Passport provenance or server-side Passport storage;
+- server-enforced Passport version authority;
+- durable/distributed idempotency, delivery queue, recipient verification, email, webhook, order, payment, or fulfilment;
+- distributed rate limits, bot mitigation, CAPTCHA, or production abuse monitoring;
+- encryption/retention/deletion/export policy or an in-app full data-management UI;
+- site-wide CSP, audit log, incident monitoring, or automated security scan script.
 
-## Buyer data lifecycle
+The inquiry route does not explicitly check Origin/Referer or use CSRF tokens. With no authenticated authority and no real external effect, the current approval is a browser UX gate, not a reusable production authorization design.
 
-The visible inquiry contains company, contact name, email, destination, product, quantity, flags, and questions.
+## Production hardening
 
-1. During editing, React holds the current draft in memory.
-2. After hydration, changes are saved to IndexedDB after a 180 ms debounce. Agent preparation saves immediately.
-3. On submit, the full draft is sent to the same-origin `/api/inquiries` route.
-4. A successful receipt is stored in IndexedDB by idempotency key.
-5. The API keeps the receipt, not a separate persisted draft, in its process-local `Map`. The request body still passes through the hosting/runtime infrastructure.
+Before processing real business or buyer data:
 
-There is no in-app delete/export UI. A user can remove local data by clearing site data for the origin. Browser storage can also be evicted automatically. A real deployment needs explicit retention, deletion, access, and encryption policies before collecting personal or commercial information.
-
-Use only fictional values in the challenge demo.
-
-## Service worker scope
-
-The service worker registers only on HTTPS or localhost. It intercepts same-origin GET requests but excludes `/api/`, React Server Component requests, and router prefetches. API submissions are never cached.
-
-Navigation is network-first. A previously cached business profile can be returned offline; otherwise the cached offline page is used. Static Next.js assets are cached on first successful fetch. Cache entries and the profile response are not confidential storage.
-
-## Important non-controls and limitations
-
-The current build does not implement:
-
-- authentication, authorization, account recovery, or representative verification;
-- KYC, legal status, registry, DNS, domain-email, or certification validation;
-- CSRF tokens or an explicit Origin/Referer check on the demo inquiry route (the assessment route does enforce same-origin browser requests);
-- distributed rate limiting, bot mitigation, CAPTCHA, anomaly detection, or abuse queues (the assessment route has only process-local throttling);
-- a durable database, multi-region idempotency, encryption policy, or backup/restore;
-- verified recipients, email delivery, webhooks, fulfilment, orders, or payments;
-- server-side output escaping beyond framework defaults or a site-wide CSP;
-- security monitoring, audit logs, data-subject workflows, or incident response automation;
-- automated dependency/security scanning in the repository scripts.
-
-Because the demo has no authenticated account and creates no real-world side effect, the approval checkbox is a UX safety gate, not an authorization system. It must not be reused as one in production.
-
-## Production hardening checklist
-
-Before processing real inquiries:
-
-1. Define representative identity, organization, and role authorization.
-2. Store attestations and source evidence with issuer, scope, timestamps, expiry, and review history.
-3. Add durable storage with a unique idempotency constraint and transactional delivery/outbox design.
-4. Verify recipients and make delivery status explicit (`accepted`, `queued`, `delivered`, `failed`) rather than equating API acceptance with delivery.
-5. Enforce request limits at the edge and application, then add rate limiting and abuse detection.
-6. Review CSRF/origin protections for the final authentication architecture.
-7. Establish CSP, HSTS, Permissions Policy, secure logging, alerting, dependency review, and secrets management.
-8. Add data-retention, deletion, export, encryption, access-control, and privacy-notice workflows.
-9. Reassess URL ingestion under production traffic, including alternate IP encodings, DNS behavior, proxy/platform egress, redirect races, decompression, content sniffing and distributed abuse.
-10. Run browser-agent security tests for prompt injection, schema bypass, approval revocation races, duplicate delivery, stale state, and cross-origin embedding.
-
-Chrome's [WebMCP documentation](https://developer.chrome.com/docs/ai/webmcp) notes that the API is gated by origin isolation and a `tools` Permissions Policy. Deployment verification should confirm the selected host/browser combination satisfies current requirements rather than assuming local feature detection proves production availability.
+1. Authenticate representatives and authorize organization/field-level actions.
+2. Store sources, claims, decisions, Passport versions, and provenance durably with append-only/auditable semantics.
+3. Sign or otherwise verifiably publish Passports with expiry/review policy.
+4. Send Passport version and approval authority to the server and revalidate product/destination/private-label rules there.
+5. Enforce streamed body limits, durable unique idempotency, distributed rate limiting, abuse detection, and observability.
+6. Build a verified delivery outbox with honest accepted/queued/delivered/failed states.
+7. Define encryption, retention, deletion, export, access, backup, and incident-response policy.
+8. Review CSRF/origin, CSP, HSTS, Permissions Policy, logging, dependency, and secrets controls for the final architecture.
+9. Reassess public-URL egress under the production platform, redirects, proxy behavior, DNS races, decompression, content sniffing, and distributed abuse.
+10. Add browser-agent security/evaluation cases for prompt injection, invented citations, stale proposals, retained executors, version races, offline retries, and duplicate delivery.
 
 ## Reporting
 
-This repository does not currently publish a security contact or vulnerability disclosure policy. Until one is added, report issues through the repository's private maintainer contact rather than including sensitive exploit details in a public issue.
+The repository does not currently publish a security contact or disclosure policy. Until one is added, use a private maintainer contact rather than posting sensitive exploit details in a public issue.
