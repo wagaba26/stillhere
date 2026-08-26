@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { FormEvent, useRef, useState } from "react";
+import { SourceEvidenceCard } from "@/components/source-evidence-card";
+import { summarizeContinuityState } from "@/domain/continuity";
+import {
+  continuityClaims,
+  continuitySources,
+  initialContinuityState,
+} from "@/domain/continuity-demo";
 import type { WebsiteAssessment } from "@/domain/assessment";
 import { DEMO_LEGACY_URL } from "@/domain/demo-data";
 import { formatBytes } from "@/lib/format";
@@ -17,6 +24,7 @@ export function AssessmentExperience() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recoveredSummary = summarizeContinuityState(initialContinuityState);
 
   async function runAssessment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -154,16 +162,44 @@ export function AssessmentExperience() {
             <p>{result.limitations.join(" ")}</p>
           </div>
 
+          {result.source === "SEEDED_DEMO" && (
+            <section className="recovered-evidence" aria-labelledby="recovered-evidence-heading">
+              <div className="recovered-evidence-heading">
+                <div>
+                  <p className="eyebrow">Recovered Evidence</p>
+                  <h3 id="recovered-evidence-heading">Four sources disagree about what is current.</h3>
+                </div>
+                <p>Recovered records are candidate evidence. A human still decides what becomes publishable.</p>
+              </div>
+              <dl className="recovered-summary">
+                <div><dt>Sources</dt><dd>{recoveredSummary.sources}</dd></div>
+                <div><dt>Extracted claims</dt><dd>{recoveredSummary.claims}</dd></div>
+                <div><dt>Conflicts</dt><dd>{recoveredSummary.conflicts}</dd></div>
+                <div><dt>Unknown claims</dt><dd>{continuityClaims.filter((claim) => claim.evidenceState === "UNKNOWN").length}</dd></div>
+                <div><dt>Human review</dt><dd>{recoveredSummary.unresolved}</dd></div>
+              </dl>
+              <div className="recovered-evidence-grid">
+                {continuitySources.map((source) => (
+                  <SourceEvidenceCard
+                    key={source.id}
+                    source={source}
+                    claims={continuityClaims.filter((claim) => claim.sourceId === source.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
           <div className="button-row result-actions">
             {result.source === "SEEDED_DEMO" ? (
               <>
-                <Link className="button button-primary" href="/recover">Recover &amp; attest current information <span aria-hidden="true">→</span></Link>
+                <Link className="button button-primary" href="/recover?demo=recovered">Review recovered evidence <span aria-hidden="true">→</span></Link>
                 <Link className="button button-secondary" href="/business/rwenzori-harvest">Skip to published demo profile</Link>
               </>
             ) : (
               <>
                 <button className="button button-primary" type="button" onClick={resetAssessment}>Assess another website</button>
-                <Link className="button button-secondary" href="/recover">Explore the fictional attestation demo</Link>
+                <Link className="button button-secondary" href="/recover?demo=recovered">Explore the fictional Continuity Ledger demo</Link>
               </>
             )}
           </div>

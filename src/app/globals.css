@@ -273,6 +273,32 @@ input:focus, select:focus, textarea:focus { border-color: var(--forest); outline
 .observation-note span, .observation-note p { color: var(--muted); font-size: .68rem; }
 .observation-note p { max-width: 900px; margin: 0; }
 .result-actions { padding: 2rem 2.2rem; }
+.recovered-evidence { border-top: 1px solid var(--line); padding: 2.2rem; background: #f7f6f1; }
+.recovered-evidence-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 1.4rem; }
+.recovered-evidence-heading h3 { max-width: 650px; margin: .35rem 0 0; color: var(--forest); font-size: 1.55rem; }
+.recovered-evidence-heading > p { max-width: 430px; margin: 0; color: var(--muted); font-size: .78rem; }
+.recovered-summary { display: grid; grid-template-columns: repeat(5, 1fr); margin: 0 0 1.2rem; border: 1px solid var(--line); background: var(--white); }
+.recovered-summary div { padding: 1rem; }
+.recovered-summary div + div { border-left: 1px solid var(--line); }
+.recovered-summary dt { color: var(--muted); font-size: .65rem; font-weight: 800; text-transform: uppercase; }
+.recovered-summary dd { margin: .35rem 0 0; color: var(--forest); font-size: 1.25rem; font-weight: 900; }
+.recovered-evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.source-evidence-card { min-width: 0; border: 1px solid var(--line); padding: 1.2rem; background: var(--white); }
+.source-evidence-card.compact { padding: 1rem; }
+.source-evidence-heading { display: flex; align-items: start; justify-content: space-between; gap: .8rem; }
+.source-evidence-heading h3 { margin: .25rem 0 0; color: var(--forest); font-size: 1rem; }
+.source-type { color: var(--ochre); font-size: .62rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.source-observed, .source-description { margin: .7rem 0 0; color: var(--muted); font-size: .7rem; }
+.source-claim-list { margin: .9rem 0 0; padding: 0; list-style: none; }
+.source-claim-list li { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: .6rem; border-top: 1px solid var(--line); padding-block: .6rem; font-size: .7rem; }
+.source-claim-list li span { color: var(--muted); }
+.source-claim-list li strong { min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.source-url { margin: .7rem 0 0; overflow-wrap: anywhere; font-size: .65rem; }
+.evidence-not-truth { display: block; margin-top: .8rem; color: var(--red); font-size: .62rem; font-weight: 800; }
+.process-sequence { margin: -2.5rem 0 2rem; color: var(--forest); font-size: .72rem; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+.process-sequence span { margin-inline: .35rem; color: var(--ochre); }
+.ledger-bridge { width: 98px; height: 58px; border-radius: 3px; font-size: .55rem; line-height: 1.15; letter-spacing: .06em; text-align: center; text-transform: uppercase; }
+.ledger-bridge strong, .ledger-bridge span { display: block; }
 
 /* Recovery */
 .recovery-intro { margin-bottom: 2.4rem; }
@@ -513,6 +539,9 @@ html[data-low-data="true"] * { animation: none !important; transition: none !imp
   .trust-grid > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .result-grid { grid-template-columns: 1fr 1fr; }
   .result-grid div:nth-child(2n) { border-right: 0; }
+  .recovered-summary { grid-template-columns: repeat(3, 1fr); }
+  .recovered-summary div + div { border-left: 0; }
+  .recovered-summary div { border-bottom: 1px solid var(--line); }
 }
 
 @media (max-width: 720px) {
@@ -538,6 +567,10 @@ html[data-low-data="true"] * { animation: none !important; transition: none !imp
   .result-header, .workflow-recommendation { align-items: start; flex-direction: column; }
   .result-grid { grid-template-columns: 1fr; }
   .result-grid div { border-right: 0; }
+  .recovered-evidence { padding: 1.3rem; }
+  .recovered-evidence-heading { display: grid; }
+  .recovered-summary, .recovered-evidence-grid { grid-template-columns: 1fr; }
+  .recovered-summary div { border-bottom: 1px solid var(--line); }
   .result-actions { align-items: stretch; flex-direction: column; }
   .wizard-progress small { display: none; }
   .wizard-progress li::after { left: 28px; }

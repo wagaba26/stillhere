@@ -11,9 +11,9 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
           <span>StillHere</span>
         </Link>
         <nav aria-label="Primary navigation">
-          <Link href="/assessment">Assessment</Link>
-          <Link href="/recover">Attest</Link>
-          <Link href="/business/rwenzori-harvest">Demo profile</Link>
+          <Link href="/assessment">Source recovery</Link>
+          <Link href="/recover">Continuity Ledger</Link>
+          <Link href="/business/rwenzori-harvest">Business Passport</Link>
         </nav>
       </div>
     </header>

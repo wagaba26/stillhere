@@ -12,9 +12,8 @@ export default function Home() {
             <p className="eyebrow">A continuity layer for active businesses</p>
             <h1>The website may be outdated. The business isn&apos;t.</h1>
             <p className="hero-lede">
-              Recover what is still true, let a representative attest what is
-              current, and publish a tiny business surface that people and agents
-              can use together.
+              Recover fragmented evidence, let an agent explain the conflicts,
+              and keep the human in control of what becomes publishable and actionable.
             </p>
             <div className="button-row">
               <Link className="button button-primary" href="/assessment">
@@ -26,23 +25,23 @@ export default function Home() {
             </div>
             <p className="microcopy">No account. Fictional demo data. Under three minutes.</p>
           </div>
-          <div className="continuity-visual" aria-label="Legacy website to attested continuity profile comparison">
+          <div className="continuity-visual" aria-label="Conflicting sources reconciled through a Continuity Ledger into a Business Passport">
             <article className="legacy-card">
               <div className="mock-browser-bar" aria-hidden="true"><i /><i /><i /></div>
-              <p className="card-kicker">Legacy website</p>
-              <strong>Reachable, but uncertain</strong>
+              <p className="card-kicker">Recovered evidence</p>
+              <strong>Sources disagree</strong>
               <dl>
-                <div><dt>Last visible update</dt><dd>2021</dd></div>
-                <div><dt>Contact</dt><dd className="status-warn">Conflicting</dd></div>
-                <div><dt>Products listed</dt><dd>12</dd></div>
+                <div><dt>Legacy website</dt><dd>2021</dd></div>
+                <div><dt>Catalogue</dt><dd>2023</dd></div>
+                <div><dt>Recent evidence</dt><dd className="status-warn">Needs review</dd></div>
               </dl>
             </article>
-            <div className="recovery-arrow" aria-hidden="true">→</div>
+            <div className="recovery-arrow ledger-bridge" aria-hidden="true"><span>Continuity</span><strong>Ledger</strong></div>
             <article className="continuity-card">
-              <p className="card-kicker">StillHere profile</p>
-              <span className="active-pill">Active · attested</span>
-              <strong>Five current offerings</strong>
-              <p>Human-readable. Agent-ready. Lightweight. Available offline.</p>
+              <p className="card-kicker">Business Passport</p>
+              <span className="active-pill">Representative attested</span>
+              <strong>Accepted facts only</strong>
+              <p>Human-readable. Agent-ready. Unresolved claims stay out.</p>
               <div className="signal-row" aria-label="Profile properties">
                 <span>Owner confirmed</span><span>WebMCP</span><span>Low data</span>
               </div>
@@ -64,13 +63,14 @@ export default function Home() {
         <section className="section shell" id="how-it-works">
           <div className="section-heading">
             <p className="eyebrow">One careful sequence</p>
-            <h2>Assess. Recover. Continue.</h2>
+            <h2>Recover. Reconcile. Continue.</h2>
             <p>A continuity surface is useful only when its information has a clear source and a human remains in control.</p>
           </div>
+          <p className="process-sequence" aria-label="Recover, Reconcile, Approve, Publish, Transact">Recover <span>→</span> Reconcile <span>→</span> Approve <span>→</span> Publish <span>→</span> Transact</p>
           <ol className="stage-grid">
-            <li><span className="stage-number">01</span><h3>Assess</h3><p>Separate website condition from business condition. Surface age, conflicts, and evidence without declaring a business closed.</p></li>
-            <li><span className="stage-number">02</span><h3>Recover</h3><p>A representative confirms contacts, offerings, capabilities, and one high-value customer workflow.</p></li>
-            <li><span className="stage-number">03</span><h3>Publish</h3><p>A fast profile exposes a small set of purposeful WebMCP tools while preserving visible human review.</p></li>
+            <li><span className="stage-number">01</span><h3>Recover evidence</h3><p>Separate website condition from business condition and retain conflicting sources as data—not instructions or truth.</p></li>
+            <li><span className="stage-number">02</span><h3>Reconcile together</h3><p>An agent can group claims and stage explanations. A human accepts, edits, rejects, or leaves each claim unresolved.</p></li>
+            <li><span className="stage-number">03</span><h3>Publish and act</h3><p>The accepted Passport powers the same public profile, agent search, and approval-gated business inquiry.</p></li>
           </ol>
         </section>
 
