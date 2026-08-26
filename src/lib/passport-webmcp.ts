@@ -8,6 +8,7 @@ import type {
   InquiryField,
   PassportVersion,
 } from "@/domain/types";
+import { evidenceLabel } from "@/lib/format";
 import {
   asToolInput,
   assertExactKeys,
@@ -109,7 +110,7 @@ export function createPassportToolDefinitions(options: PassportToolOptions) {
     name: "get_business_passport",
     title: "Get the published Business Passport",
     description:
-      "Return the compact published Passport for Rwenzori Harvest Coffee Ltd, including accepted contact, capabilities, and current offerings only.",
+      "Use to read the exact published Passport version shown on this page. Returns accepted contact, capabilities, destination qualifications, and current offerings only.",
     inputSchema: objectSchema,
     annotations: { readOnlyHint: true },
     execute: async (rawInput = {}) => {
@@ -133,7 +134,7 @@ export function createPassportToolDefinitions(options: PassportToolOptions) {
     name: "search_current_offerings",
     title: "Search published current offerings",
     description:
-      "Search only current offerings in the published Business Passport. Destination results preserve supported versus available-by-inquiry qualification.",
+      "Use to find current published offerings by query, destination, and private-label need. Preserves SUPPORTED versus AVAILABLE_BY_INQUIRY and never guarantees inquiry-qualified availability.",
     inputSchema: {
       ...objectSchema,
       properties: {
@@ -163,7 +164,10 @@ export function createPassportToolDefinitions(options: PassportToolOptions) {
           maxResults,
         },
         version.passport,
-      );
+      ).map(({ evidenceState, ...offering }) => ({
+        ...offering,
+        evidenceState: evidenceLabel(evidenceState),
+      }));
       options.onActivity?.(
         "search_current_offerings",
         `Returned ${offerings.length} published offering${offerings.length === 1 ? "" : "s"}.`,
@@ -177,7 +181,7 @@ export function createPassportToolDefinitions(options: PassportToolOptions) {
     name: "prepare_business_inquiry",
     title: "Prepare a visible business inquiry",
     description:
-      "Populate and save the visible inquiry form using a published offering. This never approves or submits; the human reviews every value.",
+      "Use to populate and save the visible inquiry draft from a published offering. Supports optional buyer identity fields; never approves or submits, and the human reviews every value.",
     inputSchema: {
       ...objectSchema,
       properties: {
@@ -267,7 +271,7 @@ export function createSubmitToolDefinition(options: SubmitToolOptions) {
     name: "submit_approved_inquiry",
     title: "Submit the human-approved inquiry",
     description:
-      "Submit the current visible inquiry only while it exactly matches the human-approved draft and published Passport version.",
+      "Use only after explicit human approval. Submits only while the current visible draft and published Passport fingerprint exactly match that approval; empty object input required.",
     inputSchema: objectSchema,
     annotations: { readOnlyHint: false },
     execute: async (rawInput = {}) => {

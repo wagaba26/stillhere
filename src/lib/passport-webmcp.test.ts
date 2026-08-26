@@ -50,6 +50,9 @@ describe("Business Passport WebMCP tools", () => {
     const result = await definitions.getPassport.execute({}, executionOptions);
     expect(definitions.getPassport.name).toBe("get_business_passport");
     expect(definitions.getPassport.annotations).toEqual({ readOnlyHint: true });
+    expect(definitions.getPassport.description).toContain("exact published Passport version");
+    expect(definitions.search.description).toContain("AVAILABLE_BY_INQUIRY");
+    expect(definitions.prepare.description).toContain("never approves or submits");
     expect(result).toMatchObject({
       version: 2,
       businessId: "rwenzori-harvest",
@@ -57,6 +60,9 @@ describe("Business Passport WebMCP tools", () => {
       contact: { phone: "+256 780 240 826" },
     });
     expect((result as { offerings: unknown[] }).offerings).toHaveLength(5);
+    await expect(
+      definitions.getPassport.execute({ rawSources: true }, executionOptions),
+    ).rejects.toThrow("unsupported field");
   });
 
   it("preserves available-by-inquiry destination qualification in search", async () => {
@@ -80,6 +86,7 @@ describe("Business Passport WebMCP tools", () => {
         {
           productId: "instant-coffee-100g",
           destinationStatus: "AVAILABLE_BY_INQUIRY",
+          evidenceState: "Representative attested",
         },
       ],
     });
@@ -181,6 +188,10 @@ describe("Business Passport WebMCP tools", () => {
       getAuthority: () => authority,
       onSubmit,
     });
+    expect(submit.description).toContain("explicit human approval");
+    await expect(
+      submit.execute({ force: true }, executionOptions),
+    ).rejects.toThrow("unsupported field");
     await expect(submit.execute({}, executionOptions)).resolves.toMatchObject({
       status: "SUBMITTED",
     });

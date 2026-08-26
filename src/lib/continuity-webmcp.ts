@@ -156,7 +156,7 @@ export function createContinuityToolDefinitions(options: ContinuityToolOptions) 
     name: "inspect_business_truth",
     title: "Inspect recovered business truth",
     description:
-      "Inspect a compact summary of the recovered Rwenzori Harvest continuity record. Returns counts and review fields, never raw source documents.",
+      "Use to identify which recovered fields need human review. Returns a bounded summary of counts, review fields, and attestation date; never returns source text or changes state.",
     inputSchema: objectSchema,
     annotations: { readOnlyHint: true },
     execute: async (rawInput = {}) => {
@@ -169,8 +169,10 @@ export function createContinuityToolDefinitions(options: ContinuityToolOptions) 
         business: derivePassport(state).profile.name,
         sources: summary.sources,
         resolved: summary.resolved,
+        reviewed: summary.reviewed,
         conflicts: summary.conflicts,
         unresolved: summary.unresolved,
+        reviewRemaining: summary.reviewRemaining,
         unsupportedClaims: summary.unsupportedClaims,
         needsReview: summary.needsReview,
         lastRepresentativeAttestation: summary.lastRepresentativeAttestation,
@@ -182,7 +184,7 @@ export function createContinuityToolDefinitions(options: ContinuityToolOptions) 
     name: "stage_claim_resolutions",
     title: "Stage claim resolutions for human review",
     description:
-      "Stage up to six source-backed resolution proposals in the visible Continuity Ledger. This cannot accept, reject, approve, or publish anything.",
+      "Use only to append up to six validated, source-backed AGENT_PROPOSED resolutions to the visible Ledger. This cannot accept, edit, reject, keep unresolved, or publish anything.",
     inputSchema: {
       ...objectSchema,
       properties: {

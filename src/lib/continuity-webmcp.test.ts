@@ -39,14 +39,18 @@ describe("Continuity Ledger WebMCP tools", () => {
 
     expect(definitions.inspect.name).toBe("inspect_business_truth");
     expect(definitions.inspect.annotations).toEqual({ readOnlyHint: true });
+    expect(definitions.inspect.description).toContain("need human review");
+    expect(definitions.stage.description).toContain("cannot accept, edit, reject");
     await expect(
       definitions.inspect.execute({}, executionOptions),
     ).resolves.toEqual({
       business: "Rwenzori Harvest Coffee Ltd",
       sources: 4,
       resolved: 0,
+      reviewed: 0,
       conflicts: 3,
       unresolved: 4,
+      reviewRemaining: 4,
       unsupportedClaims: 1,
       needsReview: [
         "tradePhone",
