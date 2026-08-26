@@ -20,6 +20,12 @@ export type PrimaryWorkflow =
   | "DISTRIBUTION_INQUIRY"
   | "PRODUCT_AVAILABILITY_INQUIRY";
 
+export type DestinationStatus =
+  | "SUPPORTED"
+  | "AVAILABLE_BY_INQUIRY"
+  | "UNSUPPORTED"
+  | "UNKNOWN";
+
 export interface Product {
   id: string;
   name: string;
@@ -86,7 +92,17 @@ export interface InquiryReceipt {
 export interface ActivityEntry {
   id: string;
   tool: string;
-  action: "available" | "called" | "completed" | "failed" | "removed";
+  action:
+    | "available"
+    | "called"
+    | "completed"
+    | "failed"
+    | "removed"
+    | "proposed"
+    | "accepted"
+    | "edited"
+    | "rejected"
+    | "published";
   summary: string;
   timestamp: string;
   readOnly: boolean;
@@ -104,4 +120,103 @@ export interface AttestationSnapshot {
   marketsServed: string[];
   workflow: PrimaryWorkflow;
   attestedAt: string;
+}
+
+export type SourceType =
+  | "LEGACY_WEBSITE"
+  | "CATALOGUE"
+  | "PUBLIC_SOURCE"
+  | "REPRESENTATIVE";
+
+export interface EvidenceSource {
+  id: string;
+  type: SourceType;
+  title: string;
+  observedAt: string;
+  url?: string;
+  evidenceState: EvidenceState;
+  description?: string;
+}
+
+export const continuityFields = [
+  "businessName",
+  "businessDescription",
+  "country",
+  "sector",
+  "operatingStatus",
+  "tradeEmail",
+  "tradePhone",
+  "capabilities",
+  "marketsServed",
+  "primaryWorkflow",
+  "stableOfferings",
+  "instantCoffeeStatus",
+  "instantCoffeeMoq",
+  "instantCoffeePrivateLabel",
+  "japanAvailability",
+  "certification",
+] as const;
+
+export type ContinuityField = (typeof continuityFields)[number];
+
+export interface BusinessClaim {
+  id: string;
+  subjectId: string;
+  field: ContinuityField;
+  value: unknown;
+  sourceId: string;
+  observedAt: string;
+  evidenceState: EvidenceState;
+}
+
+export type ResolutionState =
+  | "UNRESOLVED"
+  | "AGENT_PROPOSED"
+  | "HUMAN_ACCEPTED"
+  | "HUMAN_EDITED"
+  | "HUMAN_REJECTED";
+
+export type ResolutionAction = "USE_VALUE" | "EXCLUDE";
+
+export interface ClaimResolution {
+  id: string;
+  subjectId: string;
+  field: ContinuityField;
+  action: ResolutionAction;
+  proposal?: unknown;
+  acceptedValue?: unknown;
+  supportingSourceIds: string[];
+  explanation?: string;
+  state: ResolutionState;
+  proposedBy?: "AGENT";
+  resolvedBy?: "HUMAN";
+  proposedAt?: string;
+  resolvedAt?: string;
+}
+
+export interface ContinuityState {
+  businessId: string;
+  sources: EvidenceSource[];
+  claims: BusinessClaim[];
+  resolutions: ClaimResolution[];
+  publishedVersionId?: string;
+  updatedAt: string;
+}
+
+export interface BusinessPassport {
+  businessId: string;
+  profile: BusinessProfile;
+  destinationStatuses: Record<string, Record<string, DestinationStatus>>;
+  acceptedFields: ContinuityField[];
+  omittedFields: ContinuityField[];
+  generatedFromResolutionIds: string[];
+  representativeAttestedAt?: string;
+}
+
+export interface PassportVersion {
+  id: string;
+  version: number;
+  generatedFromResolutionIds: string[];
+  publishedAt: string;
+  passport: BusinessPassport;
 }
