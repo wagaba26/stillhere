@@ -177,7 +177,7 @@ Or run all checks:
 npm run check
 ```
 
-At commit `96366cf`, the verified test snapshot is **12 test files and 78 passing tests**. Coverage includes assessment parsing and SSRF boundaries, claim conflict/resolution rules, Passport derivation and safe fallbacks, six tool definitions and strict parsing, retained-executor revocation, inquiry authority and idempotency, IndexedDB v1→v2 migration/atomic publication/scoped reset, and global preference compatibility.
+The verified final snapshot is **12 test files and 80 passing tests**. Coverage includes assessment parsing and SSRF boundaries, claim conflict/resolution precedence, Passport derivation and safe fallbacks, six tool definitions and strict parsing, retained-executor revocation, inquiry authority and idempotency, IndexedDB v1→v2 migration/atomic publication/scoped reset, and global preference compatibility.
 
 Automated tests do not replace a WebMCP-capable browser pass, offline navigation test, or probabilistic agent evaluation.
 

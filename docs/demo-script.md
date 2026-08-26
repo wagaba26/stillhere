@@ -7,7 +7,7 @@ This script demonstrates all six route-scoped WebMCP tools while keeping every a
 1. Use the deployed HTTPS app or a WebMCP-enabled local Chrome build.
 2. In the footer, select **Reset demo**, then **Confirm reset**. This clears device demo Ledger/Passport/draft/receipts but preserves Low Data and caches.
 3. If Low Data was previously on, turn it off from the Passport route before recording; reset intentionally preserves the preference.
-4. Confirm `npm run check` passes. At commit `96366cf`, the snapshot is 12 test files and 78 tests.
+4. Confirm `npm run check` passes. The final snapshot is 12 test files and 80 tests.
 5. Use only the fictional buyer values below.
 
 ## 0:00–0:18 — Problem and differentiation

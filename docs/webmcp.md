@@ -222,7 +222,7 @@ Where supported, DevTools can inspect the current route names:
 npm test
 ```
 
-At commit `96366cf`: **12 test files, 78 passing tests**.
+Final verified snapshot: **12 test files, 80 passing tests**.
 
 The suite covers Ledger and Passport tool contracts, schema/runtime mismatches, invalid source/value proposals, human-authority preservation, Passport-qualified search/preparation, retained submit executor rejection, feature detection, domain rules, persistence migration/publication/reset, and API/assessment boundaries. It does not simulate a production browser agent, so the manual lifecycle test and probabilistic prompts still matter. Chrome's [WebMCP eval guidance](https://developer.chrome.com/docs/ai/webmcp/evals) recommends both deterministic tests and agent evaluations.
 
