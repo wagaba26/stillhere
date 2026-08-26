@@ -7,12 +7,15 @@ import {
 } from "./continuity";
 import {
   initialContinuityState,
+  prePivotPassportVersion,
   recommendedResolutionProposals,
 } from "./continuity-demo";
+import { business } from "./demo-data";
 import {
   createPassportVersion,
   derivePassport,
   destinationStatusFor,
+  legacyAttestationToPassportVersion,
   searchPassportOfferings,
 } from "./passport";
 
@@ -33,6 +36,47 @@ function resolvedDemo() {
 }
 
 describe("Business Passport derivation", () => {
+  it("provides a safe deterministic v1 fallback without unresolved facts", () => {
+    expect(prePivotPassportVersion.version).toBe(1);
+    expect(prePivotPassportVersion.passport.profile.phone).toBe("");
+    expect(
+      prePivotPassportVersion.passport.profile.products.map((product) => product.id),
+    ).not.toContain("instant-coffee-100g");
+  });
+
+  it("projects old attestation storage without leaking unreviewed Instant Coffee", () => {
+    const legacy = legacyAttestationToPassportVersion(
+      {
+        identity: {
+          name: business.name,
+          description: business.description,
+          country: business.country,
+          sector: business.sector,
+        },
+        contactStates: {
+          [business.email]: "CURRENT",
+          [business.phone]: "UNKNOWN",
+        },
+        productStates: { "instant-coffee-100g": "CURRENTLY_AVAILABLE" },
+        capabilities: {
+          b2bInquiries: true,
+          exports: true,
+          samples: true,
+          privateLabel: true,
+        },
+        marketsServed: ["Uganda"],
+        workflow: "REQUEST_QUOTATION",
+        attestedAt: "2026-08-20T10:00:00.000Z",
+      },
+      business,
+    );
+    expect(legacy.passport.profile.email).toBe(business.email);
+    expect(legacy.passport.profile.phone).toBe("");
+    expect(legacy.passport.profile.products.map((product) => product.id)).not.toContain(
+      "instant-coffee-100g",
+    );
+  });
+
   it("excludes unresolved values from the initial preview", () => {
     const passport = derivePassport(initialContinuityState);
     expect(passport.profile.phone).toBe("");

@@ -1,4 +1,5 @@
 import { business } from "./demo-data";
+import { createPassportVersion } from "./passport";
 import type {
   BusinessClaim,
   ClaimResolution,
@@ -152,3 +153,10 @@ export const recommendedResolutionProposals = [
     explanation: "The old certification wording lacks current support and should not be published.",
   },
 ] as const;
+
+export const prePivotPassportVersion = createPassportVersion(
+  initialContinuityState,
+  [],
+  new Date("2026-08-26T00:00:00.000Z"),
+  1,
+);

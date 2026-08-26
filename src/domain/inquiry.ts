@@ -1,5 +1,21 @@
 import { business } from "./demo-data";
-import type { BusinessProfile, InquiryDraft, InquiryReceipt } from "./types";
+import { isOfferingPublishable } from "./passport";
+import type {
+  BusinessPassport,
+  BusinessProfile,
+  InquiryDraft,
+  InquiryReceipt,
+} from "./types";
+
+type InquiryAuthority = BusinessProfile | BusinessPassport;
+
+function isPassport(authority: InquiryAuthority): authority is BusinessPassport {
+  return "profile" in authority && "destinationStatuses" in authority;
+}
+
+function authorityProfile(authority: InquiryAuthority) {
+  return isPassport(authority) ? authority.profile : authority;
+}
 
 export const emptyInquiry = (idempotencyKey = createIdempotencyKey()): InquiryDraft => ({
   productId: "",
@@ -29,9 +45,10 @@ export interface InquiryValidation {
 
 export function validateInquiry(
   draft: InquiryDraft,
-  profile: BusinessProfile = business,
+  authority: InquiryAuthority = business,
 ): InquiryValidation {
   const errors: InquiryValidation["errors"] = {};
+  const profile = authorityProfile(authority);
   const product = profile.products.find((item) => item.id === draft.productId);
   const quantity = Number(draft.quantity);
 
@@ -43,6 +60,16 @@ export function validateInquiry(
   }
   if (!draft.destinationCountry.trim()) {
     errors.destinationCountry = "Enter the destination country.";
+  } else if (
+    product &&
+    isPassport(authority) &&
+    !isOfferingPublishable(authority, product.id, draft.destinationCountry)
+  ) {
+    errors.destinationCountry =
+      "This Passport does not publish availability for that destination.";
+  }
+  if (draft.privateLabel && product && !product.privateLabel) {
+    errors.privateLabel = "Private-label packaging is not published for this product.";
   }
   if (!draft.buyerCompany.trim()) {
     errors.buyerCompany = "Enter the buyer company.";
@@ -60,8 +87,9 @@ export function validateInquiry(
 export function prepareInquiry(
   input: Partial<Omit<InquiryDraft, "idempotencyKey" | "updatedAt">>,
   current: InquiryDraft,
-  profile: BusinessProfile = business,
+  authority: InquiryAuthority = business,
 ): InquiryDraft {
+  const profile = authorityProfile(authority);
   const allowedProduct = profile.products.some(
     (product) =>
       product.id === input.productId && product.status === "CURRENTLY_AVAILABLE",
@@ -69,6 +97,23 @@ export function prepareInquiry(
 
   if (input.productId !== undefined && !allowedProduct) {
     throw new TypeError("productId must identify a currently available product.");
+  }
+
+  const productId = input.productId ?? current.productId;
+  const destinationCountry = input.destinationCountry ?? current.destinationCountry;
+  const product = profile.products.find((item) => item.id === productId);
+  if (
+    product &&
+    destinationCountry.trim() &&
+    isPassport(authority) &&
+    !isOfferingPublishable(authority, product.id, destinationCountry)
+  ) {
+    throw new TypeError(
+      "destinationCountry must be supported or available by inquiry in the published Passport.",
+    );
+  }
+  if ((input.privateLabel ?? current.privateLabel) && product && !product.privateLabel) {
+    throw new TypeError("The published product does not offer private-label packaging.");
   }
 
   return {

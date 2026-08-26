@@ -5,6 +5,7 @@ import {
 import type {
   BusinessPassport,
   BusinessProfile,
+  AttestationSnapshot,
   ClaimResolution,
   ContinuityField,
   ContinuityState,
@@ -241,6 +242,66 @@ export function createPassportVersion(
     generatedFromResolutionIds: [...passport.generatedFromResolutionIds],
     publishedAt,
     passport: clone(passport),
+  };
+}
+
+export function legacyAttestationToPassportVersion(
+  snapshot: AttestationSnapshot,
+  base: BusinessProfile,
+): PassportVersion {
+  const products = base.products
+    .filter((product) => product.id !== "instant-coffee-100g")
+    .map((product) => ({
+      ...clone(product),
+      status: snapshot.productStates[product.id] ?? product.status,
+    }));
+  const phoneIsCurrent = snapshot.contactStates[base.phone] === "CURRENT";
+  const emailIsCurrent = snapshot.contactStates[base.email] === "CURRENT";
+  const profile: BusinessProfile = {
+    ...clone(base),
+    ...clone(snapshot.identity),
+    phone: phoneIsCurrent ? base.phone : "",
+    email: emailIsCurrent ? base.email : "",
+    lastAttested: snapshot.attestedAt.slice(0, 10),
+    workflow: snapshot.workflow,
+    capabilities: {
+      ...clone(base.capabilities),
+      ...clone(snapshot.capabilities),
+      marketsServed: [...snapshot.marketsServed],
+    },
+    products,
+  };
+  const acceptedFields: ContinuityField[] = [
+    "businessName",
+    "businessDescription",
+    "country",
+    "sector",
+    "operatingStatus",
+    ...(emailIsCurrent ? (["tradeEmail"] as const) : []),
+    ...(phoneIsCurrent ? (["tradePhone"] as const) : []),
+    "capabilities",
+    "marketsServed",
+    "primaryWorkflow",
+    "stableOfferings",
+  ];
+  const passport: BusinessPassport = {
+    businessId: base.slug,
+    profile,
+    destinationStatuses: buildDestinationStatuses(products),
+    acceptedFields,
+    omittedFields: reviewableContinuityFields.filter(
+      (field) => !acceptedFields.includes(field),
+    ),
+    generatedFromResolutionIds: ["legacy-attestation-v1"],
+    representativeAttestedAt: snapshot.attestedAt.slice(0, 10),
+  };
+  return {
+    id: "passport-v1-legacy-attestation",
+    businessId: base.slug,
+    version: 1,
+    generatedFromResolutionIds: [...passport.generatedFromResolutionIds],
+    publishedAt: snapshot.attestedAt,
+    passport,
   };
 }
 

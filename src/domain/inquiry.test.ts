@@ -1,5 +1,27 @@
 import { describe, expect, it } from "vitest";
+import { acceptResolution, stageResolutionProposals } from "./continuity";
+import {
+  initialContinuityState,
+  recommendedResolutionProposals,
+} from "./continuity-demo";
 import { emptyInquiry, prepareInquiry, SubmissionLedger, validateInquiry } from "./inquiry";
+import { derivePassport } from "./passport";
+
+function publishedPassport() {
+  const staged = stageResolutionProposals(
+    initialContinuityState,
+    recommendedResolutionProposals,
+    new Date("2026-08-26T08:00:00.000Z"),
+  );
+  return derivePassport(
+    staged.resolutions
+      .filter((resolution) => resolution.state === "AGENT_PROPOSED")
+      .reduce(
+        (state, resolution) => acceptResolution(state, resolution.id),
+        staged,
+      ),
+  );
+}
 
 const validDraft = () => ({
   ...emptyInquiry("test-idempotency-key"),
@@ -56,6 +78,34 @@ describe("inquiry rules", () => {
     expect(() =>
       prepareInquiry({ productId: "instant-coffee-100g" }, current),
     ).toThrow("currently available product");
+  });
+
+  it("uses published destination qualification and private-label authority", () => {
+    const passport = publishedPassport();
+    const instantJapan = {
+      ...validDraft(),
+      productId: "instant-coffee-100g",
+      quantity: "2500",
+      destinationCountry: "Japan",
+    };
+    expect(validateInquiry(instantJapan, passport).valid).toBe(true);
+    expect(
+      validateInquiry(
+        { ...instantJapan, destinationCountry: "United States" },
+        passport,
+      ).errors.destinationCountry,
+    ).toContain("does not publish availability");
+    expect(() =>
+      prepareInquiry(
+        {
+          productId: "arabica-green-60kg",
+          destinationCountry: "Japan",
+          privateLabel: true,
+        },
+        emptyInquiry("passport-inquiry"),
+        passport,
+      ),
+    ).toThrow("does not offer private-label");
   });
 
   it("returns the same receipt for a duplicate idempotency key", () => {

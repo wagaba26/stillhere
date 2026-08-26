@@ -11,6 +11,7 @@ import {
 } from "react";
 import { EvidenceBadge } from "@/components/evidence-badge";
 import { SiteFooter } from "@/components/site-footer";
+import { prePivotPassportVersion } from "@/domain/continuity-demo";
 import { business } from "@/domain/demo-data";
 import {
   createIdempotencyKey,
@@ -20,15 +21,23 @@ import {
 } from "@/domain/inquiry";
 import type {
   ActivityEntry,
-  AttestationSnapshot,
-  BusinessProfile,
   InquiryDraft,
   InquiryField,
   InquiryReceipt,
 } from "@/domain/types";
+import {
+  isOfferingPublishable,
+  legacyAttestationToPassportVersion,
+} from "@/domain/passport";
 import { useWebMcp } from "@/hooks/use-webmcp";
 import { formatAttestedDate, formatBytes, productStatusLabel } from "@/lib/format";
-import { loadDraft, loadReceipt, saveDraft, saveReceipt } from "@/lib/indexed-db";
+import {
+  loadDraft,
+  loadPublishedPassport,
+  loadReceipt,
+  saveDraft,
+  saveReceipt,
+} from "@/lib/indexed-db";
 import {
   measureBrowserResources,
   readAttestationSnapshot,
@@ -83,29 +92,22 @@ export function ProfileExperience() {
   const [lowData, setLowData] = useState(false);
   const [measurement, setMeasurement] = useState(initialMeasurement);
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
-  const [attestation, setAttestation] = useState<AttestationSnapshot | null>(null);
+  const [passportVersion, setPassportVersion] = useState(
+    prePivotPassportVersion,
+  );
+  const [passportSource, setPassportSource] = useState<
+    "baseline" | "legacy" | "published"
+  >("baseline");
+  const [hydratedPassport, setHydratedPassport] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const profile = useMemo<BusinessProfile>(() => {
-    if (!attestation) return business;
-    return {
-      ...business,
-      ...attestation.identity,
-      lastAttested: attestation.attestedAt,
-      workflow: attestation.workflow,
-      capabilities: {
-        ...business.capabilities,
-        ...attestation.capabilities,
-        marketsServed: attestation.marketsServed,
-      },
-      products: business.products.map((product) => ({
-        ...product,
-        status: attestation.productStates[product.id] ?? product.status,
-      })),
-    };
-  }, [attestation]);
+  const passport = passportVersion.passport;
+  const profile = passport.profile;
 
-  const validation = useMemo(() => validateInquiry(draft, profile), [draft, profile]);
+  const validation = useMemo(
+    () => validateInquiry(draft, passport),
+    [draft, passport],
+  );
 
   useEffect(() => {
     draftRef.current = draft;
@@ -150,6 +152,32 @@ export function ProfileExperience() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    async function restorePassport() {
+      try {
+        const stored = await loadPublishedPassport();
+        if (cancelled) return;
+        if (stored) {
+          setPassportVersion(stored);
+          setPassportSource("published");
+          return;
+        }
+        const legacy = readAttestationSnapshot(window.localStorage);
+        if (legacy) {
+          setPassportVersion(legacyAttestationToPassportVersion(legacy, business));
+          setPassportSource("legacy");
+        }
+      } finally {
+        if (!cancelled) setHydratedPassport(true);
+      }
+    }
+    void restorePassport();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!hydratedDraft || !draft.idempotencyKey) return;
     const timer = window.setTimeout(() => {
       setDraftPersistence("saving");
@@ -179,9 +207,7 @@ export function ProfileExperience() {
 
   useEffect(() => {
     const stored = readLowDataPreference(window.localStorage);
-    const storedAttestation = readAttestationSnapshot(window.localStorage);
     queueMicrotask(() => setLowData(stored));
-    queueMicrotask(() => setAttestation(storedAttestation));
     document.documentElement.dataset.lowData = String(stored);
     const refresh = () => setMeasurement(measureBrowserResources(performance));
     const timer = window.setTimeout(refresh, 800);
@@ -229,7 +255,7 @@ export function ProfileExperience() {
     values: Partial<Omit<InquiryDraft, "idempotencyKey" | "updatedAt">>,
     fields: InquiryField[],
   ) {
-    const prepared = prepareInquiry(values, draftRef.current, profile);
+    const prepared = prepareInquiry(values, draftRef.current, passport);
     setApproved(false);
     setReceipt(null);
     setSubmitError("");
@@ -250,7 +276,7 @@ export function ProfileExperience() {
       preventScroll: true,
     });
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    const checked = validateInquiry(prepared, profile);
+    const checked = validateInquiry(prepared, passport);
     return {
       draft: prepared,
       valid: checked.valid,
@@ -260,7 +286,7 @@ export function ProfileExperience() {
 
   async function performSubmit() {
     const current = draftRef.current;
-    const checked = validateInquiry(current, profile);
+    const checked = validateInquiry(current, passport);
     if (!approved || !checked.valid) {
       throw new Error("Review approval and all required fields are needed.");
     }
@@ -353,8 +379,7 @@ export function ProfileExperience() {
   }
 
   const currentProducts = profile.products.filter(
-    (product) =>
-      product.status === "CURRENTLY_AVAILABLE" || product.status === "SEASONAL",
+    (product) => isOfferingPublishable(passport, product.id),
   );
 
   const visibleSubmissionState =
@@ -390,13 +415,13 @@ export function ProfileExperience() {
             <p className="profile-category">Coffee producer &amp; exporter · Uganda</p>
             <h1>{profile.name}</h1>
             <div className="attested-line">
-              <span className="active-pill large"><span aria-hidden="true" /> Active — business information attested</span>
-              <span>Last confirmed {formatAttestedDate(profile.lastAttested)}</span>
+              <span className="active-pill large"><span aria-hidden="true" /> Current information — representative attested</span>
+              <span>{profile.status === "ACTIVE" ? "Representative reports business is operating" : "Operating status not attested"} · {passportSource === "published" ? "Published" : passportSource === "legacy" ? "Compatibility snapshot dated" : "Baseline dated"} {formatAttestedDate(passportVersion.publishedAt.slice(0, 10))}</span>
             </div>
             <p>{profile.description}</p>
             <div className="button-row">
               <a className="button button-primary" href="#inquiry">Request a quotation <span aria-hidden="true">↓</span></a>
-              {(!attestation || attestation.contactStates[profile.email] === "CURRENT") && <a className="text-link" href={`mailto:${profile.email}`}>{profile.email}</a>}
+              {profile.email && <a className="text-link" href={`mailto:${profile.email}`}>{profile.email}</a>}
             </div>
           </div>
           <div className="business-mark" aria-hidden="true"><span>RH</span><i>Uganda · 2026</i></div>
@@ -405,7 +430,7 @@ export function ProfileExperience() {
         <section className="trust-strip">
           <div className="shell trust-grid">
             <div><small>Information state</small><EvidenceBadge state={profile.evidenceState} /></div>
-            <div><small>Primary workflow</small><strong>Request quotation</strong></div>
+            <div><small>Business Passport</small><strong>Version {passportVersion.version}</strong></div>
             <div><small>Agent support</small><strong>{webMcpStatus === "ready" ? "3 tools available" : webMcpStatus === "unsupported" ? "Human experience active" : "Checking WebMCP"}</strong></div>
             <div><small>Current offerings</small><strong>{currentProducts.length} listed</strong></div>
           </div>
@@ -451,7 +476,7 @@ export function ProfileExperience() {
 
               <form ref={formRef} className="inquiry-form" onSubmit={submitManually} noValidate>
                 <div className="field-grid two-column">
-                  <label className={agentFields.has("productId") ? "agent-updated" : ""}>Product<span className="required">Required</span><select value={draft.productId} onChange={(event) => updateField("productId", event.target.value)} aria-invalid={Boolean(validation.errors.productId)}><option value="">Select a product</option>{profile.products.filter((product) => product.status === "CURRENTLY_AVAILABLE").map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select>{validation.errors.productId && <small className="field-error">{validation.errors.productId}</small>}</label>
+                  <label className={agentFields.has("productId") ? "agent-updated" : ""}>Product<span className="required">Required</span><select value={draft.productId} onChange={(event) => updateField("productId", event.target.value)} aria-invalid={Boolean(validation.errors.productId)}><option value="">Select a product</option>{currentProducts.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select>{validation.errors.productId && <small className="field-error">{validation.errors.productId}</small>}</label>
                   <label className={agentFields.has("quantity") ? "agent-updated" : ""}>Quantity<span className="required">Required</span><input type="number" min="1" inputMode="numeric" value={draft.quantity} onChange={(event) => updateField("quantity", event.target.value)} placeholder="e.g. 5,000" aria-invalid={Boolean(validation.errors.quantity)} />{validation.errors.quantity && <small className="field-error">{validation.errors.quantity}</small>}</label>
                   <label className={agentFields.has("destinationCountry") ? "agent-updated" : ""}>Destination country<span className="required">Required</span><input value={draft.destinationCountry} onChange={(event) => updateField("destinationCountry", event.target.value)} placeholder="e.g. Japan" aria-invalid={Boolean(validation.errors.destinationCountry)} />{validation.errors.destinationCountry && <small className="field-error">{validation.errors.destinationCountry}</small>}</label>
                   <label className={agentFields.has("buyerCompany") ? "agent-updated" : ""}>Buyer company<span className="required">Required</span><input value={draft.buyerCompany} onChange={(event) => updateField("buyerCompany", event.target.value)} autoComplete="organization" aria-invalid={Boolean(validation.errors.buyerCompany)} />{validation.errors.buyerCompany && <small className="field-error">{validation.errors.buyerCompany}</small>}</label>
@@ -480,7 +505,7 @@ export function ProfileExperience() {
 
             <section className="profile-section source-section" aria-labelledby="source-heading">
               <div className="profile-section-heading"><div><p className="eyebrow">Source &amp; currentness</p><h2 id="source-heading">What “attested” means here</h2></div></div>
-              <div className="source-grid"><article><EvidenceBadge state="OWNER_CONFIRMED" /><h3>Current business information</h3><p>A fictional demo representative confirmed the displayed identity, contact, product, and capability records on 26 August 2026.</p></article><article><EvidenceBadge state="LEGACY_SOURCE" /><h3>Legacy material stays separate</h3><p>Old pages can help recover candidate facts, but their contents never generate executable tool definitions or become current without review.</p></article></div>
+              <div className="source-grid"><article><EvidenceBadge state="OWNER_CONFIRMED" /><h3>Passport version {passportVersion.version}</h3><p>{passportSource === "published" ? "This immutable snapshot was published from accepted human resolutions." : passportSource === "legacy" ? "This compatibility snapshot preserves a valid earlier demo attestation while excluding unreviewed Instant Coffee details." : "This safe baseline contains only the already accepted facts available before reconciliation."} {hydratedPassport ? "Device storage has been checked." : "Checking device storage…"}</p></article><article><EvidenceBadge state="LEGACY_SOURCE" /><h3>Legacy material stays separate</h3><p>Old pages can help recover candidate facts, but their contents never generate executable tool definitions or become current without review.</p></article></div>
               <p className="scope-note"><strong>Scope:</strong> Information Attestation confirms individual demo claims. It is not identity verification, KYC, a registry check, or a certification audit.</p>
             </section>
           </div>
@@ -498,7 +523,7 @@ export function ProfileExperience() {
               {activity.length === 0 ? <div className="empty-activity"><span aria-hidden="true">◇</span><p>No WebMCP calls yet. The human experience remains fully available.</p></div> : <ol className="activity-list">{activity.map((entry) => <li key={entry.id}><span className={`activity-dot action-${entry.action}`} aria-hidden="true" /><div><div><code>{entry.tool}</code><time dateTime={entry.timestamp}>{new Intl.DateTimeFormat("en", { hour: "2-digit", minute: "2-digit" }).format(new Date(entry.timestamp))}</time></div><p>{entry.summary}</p><small>{entry.readOnly ? "Read-only" : "State-changing"}{entry.approvalRequired ? " · Human approval required" : ""}</small></div></li>)}</ol>}
             </details>
 
-            <section className="sidebar-card contact-card"><p className="eyebrow">Current contact</p><h2>Trade desk</h2>{(!attestation || attestation.contactStates[profile.email] === "CURRENT") && <a href={`mailto:${profile.email}`}>{profile.email}</a>}{(!attestation || attestation.contactStates[profile.phone] === "CURRENT") && <a href={`tel:${profile.phone.replaceAll(" ", "")}`}>{profile.phone}</a>}<small>Displayed contact items are owner-confirmed fictional demo records.</small></section>
+            <section className="sidebar-card contact-card"><p className="eyebrow">Current contact</p><h2>Trade desk</h2>{profile.email && <a href={`mailto:${profile.email}`}>{profile.email}</a>}{profile.phone && <a href={`tel:${profile.phone.replaceAll(" ", "")}`}>{profile.phone}</a>}{!profile.phone && <small>Phone omitted until a human publishes a resolution.</small>}<small>Displayed contact items come from the published fictional Passport.</small></section>
           </aside>
         </div>
       </main>
