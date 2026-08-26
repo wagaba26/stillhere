@@ -181,16 +181,21 @@ export function latestHumanResolution(
   state: ContinuityState,
   field: ContinuityField,
 ) {
-  return state.resolutions
+  const latestDecision = state.resolutions
     .filter(
       (resolution) =>
         resolution.field === field &&
-        (resolution.state === "HUMAN_ACCEPTED" ||
-          resolution.state === "HUMAN_EDITED"),
+        resolution.resolvedBy === "HUMAN" &&
+        Boolean(resolution.resolvedAt),
     )
     .sort((left, right) =>
       (right.resolvedAt ?? "").localeCompare(left.resolvedAt ?? ""),
     )[0];
+
+  return latestDecision?.state === "HUMAN_ACCEPTED" ||
+    latestDecision?.state === "HUMAN_EDITED"
+    ? latestDecision
+    : undefined;
 }
 
 export function getUnresolvedClaims(state: ContinuityState) {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   acceptResolution,
   editResolution,
+  leaveResolutionUnresolved,
   stageResolutionProposal,
   stageResolutionProposals,
 } from "./continuity";
@@ -138,6 +139,33 @@ describe("Business Passport derivation", () => {
       new Date("2026-08-26T10:00:00.000Z"),
     );
     expect(derivePassport(later).profile.phone).toBe(before.profile.phone);
+  });
+
+  it("omits an older accepted value after the latest human decision keeps it unresolved", () => {
+    const staged = stageResolutionProposal(
+      initialContinuityState,
+      recommendedResolutionProposals[0],
+      new Date("2026-08-26T08:00:00.000Z"),
+    );
+    const accepted = acceptResolution(
+      staged,
+      staged.resolutions.at(-1)!.id,
+      new Date("2026-08-26T08:05:00.000Z"),
+    );
+    const laterProposal = stageResolutionProposal(
+      accepted,
+      recommendedResolutionProposals[0],
+      new Date("2026-08-26T09:00:00.000Z"),
+    );
+    const unresolved = leaveResolutionUnresolved(
+      laterProposal,
+      laterProposal.resolutions.at(-1)!.id,
+      new Date("2026-08-26T09:05:00.000Z"),
+    );
+
+    const passport = derivePassport(unresolved);
+    expect(passport.profile.phone).toBe("");
+    expect(passport.omittedFields).toContain("tradePhone");
   });
 
   it("creates incrementing immutable Passport snapshots", () => {

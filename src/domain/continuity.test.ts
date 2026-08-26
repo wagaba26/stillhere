@@ -7,6 +7,7 @@ import {
   getUnsupportedClaims,
   groupClaimsByField,
   latestHumanResolution,
+  leaveResolutionUnresolved,
   rejectResolution,
   stageResolutionProposal,
   stageResolutionProposals,
@@ -139,5 +140,43 @@ describe("Continuity Ledger domain", () => {
         (item) => item.field === "tradePhone" && item.state === "AGENT_PROPOSED",
       ),
     ).toHaveLength(1);
+  });
+
+  it("lets a later human rejection or unresolved decision supersede an older acceptance", () => {
+    const staged = stageResolutionProposal(
+      initialContinuityState,
+      recommendedResolutionProposals[0],
+      new Date("2026-08-26T08:00:00.000Z"),
+    );
+    const accepted = acceptResolution(
+      staged,
+      staged.resolutions.at(-1)!.id,
+      new Date("2026-08-26T08:05:00.000Z"),
+    );
+
+    const rejectedProposal = stageResolutionProposal(
+      accepted,
+      recommendedResolutionProposals[0],
+      new Date("2026-08-26T09:00:00.000Z"),
+    );
+    const rejected = rejectResolution(
+      rejectedProposal,
+      rejectedProposal.resolutions.at(-1)!.id,
+      new Date("2026-08-26T09:05:00.000Z"),
+    );
+    expect(latestHumanResolution(rejected, "tradePhone")).toBeUndefined();
+
+    const unresolvedProposal = stageResolutionProposal(
+      accepted,
+      recommendedResolutionProposals[0],
+      new Date("2026-08-26T10:00:00.000Z"),
+    );
+    const unresolved = leaveResolutionUnresolved(
+      unresolvedProposal,
+      unresolvedProposal.resolutions.at(-1)!.id,
+      new Date("2026-08-26T10:05:00.000Z"),
+    );
+    expect(latestHumanResolution(unresolved, "tradePhone")).toBeUndefined();
+    expect(getUnresolvedClaims(unresolved)).toContain("tradePhone");
   });
 });
