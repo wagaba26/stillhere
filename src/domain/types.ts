@@ -215,6 +215,7 @@ export interface BusinessPassport {
 
 export interface PassportVersion {
   id: string;
+  businessId: string;
   version: number;
   generatedFromResolutionIds: string[];
   publishedAt: string;

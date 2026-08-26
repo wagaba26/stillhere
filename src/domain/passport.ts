@@ -235,6 +235,7 @@ export function createPassportVersion(
   const publishedAt = now.toISOString();
   return {
     id: `passport-v${version}-${now.getTime()}`,
+    businessId: state.businessId,
     version,
     generatedFromResolutionIds: [...passport.generatedFromResolutionIds],
     publishedAt,
