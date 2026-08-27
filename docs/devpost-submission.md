@@ -132,5 +132,5 @@ Repository:
 https://github.com/wagaba26/stillhere
 
 Demo video:
-[WAITING FOR FINAL PUBLIC YOUTUBE URL]
+https://youtu.be/3PZHm2X10PE
 ```

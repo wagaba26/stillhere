@@ -9,7 +9,7 @@ Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/).
 - **Live demo:** [stillhere-azure.vercel.app](https://stillhere-azure.vercel.app)
 - **Source:** [github.com/wagaba26/stillhere](https://github.com/wagaba26/stillhere)
 - **Judge quick start:** [docs/judge-quick-start.md](docs/judge-quick-start.md)
-- **Demo video:** `[WAITING FOR FINAL PUBLIC YOUTUBE URL]`
+- **Demo video:** [youtu.be/3PZHm2X10PE](https://youtu.be/3PZHm2X10PE)
 - **Demo account:** none
 
 ## The idea in one example
@@ -109,7 +109,7 @@ Next.js 16 App Router
 └─ POST /api/inquiries: process-local demo receipt ledger
 ```
 
-Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/continuity-ledger.md), [webmcp.md](docs/webmcp.md), [WebMCP agent evaluations](docs/webmcp-evals.md), and [security.md](docs/security.md) for the exact data, authority, persistence, evaluation, and threat boundaries. The challenge rationale and implementation provenance are in [competition-positioning.md](docs/competition-positioning.md) and [preexisting-vs-pivot.md](docs/preexisting-vs-pivot.md). The final [Devpost package](docs/devpost-submission.md), [judge quick start](docs/judge-quick-start.md), and [video script](docs/video-final.md) are copy/recording ready while the public YouTube URL remains a human action.
+Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/continuity-ledger.md), [webmcp.md](docs/webmcp.md), [WebMCP agent evaluations](docs/webmcp-evals.md), and [security.md](docs/security.md) for the exact data, authority, persistence, evaluation, and threat boundaries. The challenge rationale and implementation provenance are in [competition-positioning.md](docs/competition-positioning.md) and [preexisting-vs-pivot.md](docs/preexisting-vs-pivot.md). The final [Devpost package](docs/devpost-submission.md), [judge quick start](docs/judge-quick-start.md), and [public demo video](https://youtu.be/3PZHm2X10PE) are ready for submission review.
 
 ## Screenshots
 
@@ -235,7 +235,7 @@ Do not enter real personal or commercial information in the public demo. See [se
 
 - **Live app:** [https://stillhere-azure.vercel.app](https://stillhere-azure.vercel.app)
 - **Source:** [https://github.com/wagaba26/stillhere](https://github.com/wagaba26/stillhere)
-- **Demo video:** `[WAITING FOR FINAL PUBLIC YOUTUBE URL]`
+- **Demo video:** [https://youtu.be/3PZHm2X10PE](https://youtu.be/3PZHm2X10PE)
 
 Other Node-compatible targets must support Next.js 16 App Router route handlers, the Node runtime used by the safe assessment fetcher, and static service-worker delivery.
 

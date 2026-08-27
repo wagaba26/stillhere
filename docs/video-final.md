@@ -118,6 +118,10 @@ To keep the story understandable and under three minutes, do not walk through ev
 
 ## YouTube metadata
 
+- **Public video:** [https://youtu.be/3PZHm2X10PE](https://youtu.be/3PZHm2X10PE)
+- **Processed duration:** 2:46
+- **Visibility:** Public
+
 ### Title
 
 `StillHere — From a stale website to a human-approved Business Passport | WebMCP Challenge`
@@ -137,4 +141,4 @@ The Rwenzori Harvest scenario and all business data shown are fictional. The cha
 
 ### Visibility and final check
 
-Set the upload to **Public**, confirm the processed duration remains below three minutes, test the video in a signed-out browser, and replace the YouTube placeholder in the submission package with the public URL.
+The upload is **Public**, the processed duration is below three minutes, the watch page loads outside the signed-in Studio session, and the public URL is recorded throughout the submission package. The corrected English transcript is published; YouTube reports that timing remapping may continue processing. A custom thumbnail is prepared but requires one-time channel phone verification before YouTube will accept it.

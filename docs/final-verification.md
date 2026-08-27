@@ -80,7 +80,7 @@ A Lighthouse/Core Web Vitals trace was **NOT RUN — environment limitation** be
 - Direct runtime dependencies (`next`, `react`, `react-dom`) and direct development dependencies report permissive MIT or Apache-2.0 licenses.
 - Lockfile review found expected transitive license families, including optional Sharp/libvips LGPL packages, Lightning CSS/axe-core MPL packages, `caniuse-lite` CC-BY-4.0, and other permissive metadata. No copied dependency source or vendored third-party binary is committed by this repository.
 - Tracked visual assets are StillHere's own SVG mark and screenshots of the fictional app. The inherited starter favicon was removed and replaced with the StillHere icon.
-- The submission-blocker search found no TODO/FIXME/HACK markers, secrets, API keys, real buyer data, or private credential files. Remaining `localhost`, `private`, `secret`, `.example`, and video-placeholder matches are legitimate instructions, security tests/controls, type names, or the explicitly pending public YouTube URL.
+- The submission-blocker search found no TODO/FIXME/HACK markers, secrets, API keys, real buyer data, private credential files, or unresolved public-video placeholders. Remaining `localhost`, `private`, `secret`, and `.example` matches are legitimate instructions, security tests/controls, or type names.
 - This is a focused submission-risk review, not legal advice; the entrant must still make the official ownership and authorization representations.
 
 ## Final gate

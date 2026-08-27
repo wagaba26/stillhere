@@ -38,7 +38,7 @@ Checked items have current evidence. Unchecked items still require a final deplo
 - [x] No TODO/FIXME/HACK markers found
 - [x] Focused commit provenance preserved
 - [x] Obvious dependency and asset license risks reviewed
-- [ ] README video placeholder replaced with final public YouTube URL
+- [x] README video placeholder replaced with final public YouTube URL
 - [ ] GitHub About description/homepage/topics updated — optional, not a blocker
 
 ## Devpost
@@ -54,7 +54,7 @@ Checked items have current evidence. Unchecked items still require a final deplo
 - [x] Four judging-criteria answers prepared
 - [x] Live URL prepared
 - [x] Repository URL prepared
-- [ ] Public YouTube URL supplied
+- [x] Public YouTube URL supplied
 - [x] Screenshot set and captions prepared
 - [x] Concise testing instructions prepared
 - [ ] Logged-in form-only fields reviewed
@@ -65,21 +65,21 @@ Checked items have current evidence. Unchecked items still require a final deplo
 
 - [x] Script targets approximately 2:45 with safety margin
 - [x] Exact prompts, clicks, narration, recording, and YouTube metadata prepared
-- [ ] Final video recorded
-- [ ] Final runtime strictly under 3:00
-- [ ] Audio clearly covers product and WebMCP implementation
-- [ ] Working software and WebMCP visibly demonstrated
-- [ ] Only fictional data visible
-- [ ] No copyrighted music or unauthorized third-party material
-- [ ] English captions checked
-- [ ] Uploaded to YouTube with visibility **Public**
-- [ ] Public URL inserted consistently in README, Devpost package, video document, and freeze record
+- [x] Final video recorded
+- [x] Final runtime strictly under 3:00 — processed runtime is 2:46
+- [x] Audio clearly covers product and WebMCP implementation
+- [x] Working software and WebMCP visibly demonstrated
+- [x] Only fictional data visible
+- [x] No copyrighted music or unauthorized third-party material
+- [x] English captions corrected and published; YouTube timing remap is processing
+- [x] Uploaded to YouTube with visibility **Public**
+- [x] Public URL inserted consistently in README, Devpost package, video document, and freeze record
 
 ## Freeze
 
 - [ ] Final submission commit recorded
 - [ ] Exact production deployment recorded
-- [ ] Public YouTube URL recorded
+- [x] Public YouTube URL recorded
 - [ ] Devpost submitted before deadline
 - [ ] Submitted repository branch, production deployment, and Devpost entry frozen
 - [ ] Separate branch/fork/deployment chosen for any post-submission work

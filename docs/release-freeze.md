@@ -1,6 +1,6 @@
 # Release freeze record
 
-The project is **not frozen yet**. The required public YouTube video has not been recorded/uploaded and the Devpost entry has not been finally submitted.
+The project is **not frozen yet**. The public YouTube video is live and documented, but the Devpost project entry has not been finally reviewed and submitted.
 
 ```text
 Submission commit:
@@ -13,7 +13,7 @@ Live URL:
 https://stillhere-azure.vercel.app
 
 YouTube:
-TBD
+https://youtu.be/3PZHm2X10PE
 
 Devpost:
 TBD
@@ -26,7 +26,7 @@ TBD
 
 Immediately before final submission:
 
-1. Insert the final **public** YouTube URL everywhere marked `[WAITING FOR FINAL PUBLIC YOUTUBE URL]`.
+1. Confirm the final **public** YouTube URL remains `https://youtu.be/3PZHm2X10PE` everywhere it is referenced.
 2. Search for `add final video`, `WAITING FOR FINAL`, `youtube`, `TODO`, and `PLACEHOLDER`; review every match.
 3. Run `npm ci` if dependencies changed, then `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`, and `npm run check`.
 4. Commit only the final video-link/checklist updates and push `main`.
@@ -48,7 +48,7 @@ If development must continue, use a separate fork or branch and a separate non-s
 
 ## Short final pass after the video arrives
 
-- replace the placeholder consistently;
+- confirm the public URL is consistent;
 - verify the YouTube page is publicly accessible without sign-in;
 - compare the video flow with the live app;
 - rerun the final checks and production smoke test;
