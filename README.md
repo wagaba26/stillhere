@@ -4,10 +4,12 @@
 
 StillHere is a business-continuity layer for the long tail of the web. It recovers conflicting source evidence, lets an agent stage bounded resolutions, leaves every authoritative decision to a human, and publishes accepted facts as a versioned Business Passport that people and browser agents can use together.
 
-Built for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/).
+Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/).
 
 - **Live demo:** [stillhere-azure.vercel.app](https://stillhere-azure.vercel.app)
 - **Source:** [github.com/wagaba26/stillhere](https://github.com/wagaba26/stillhere)
+- **Judge quick start:** [docs/judge-quick-start.md](docs/judge-quick-start.md)
+- **Demo video:** `[WAITING FOR FINAL PUBLIC YOUTUBE URL]`
 - **Demo account:** none
 
 ## The problem
@@ -99,9 +101,13 @@ Next.js 16 App Router
 └─ POST /api/inquiries: process-local demo receipt ledger
 ```
 
-Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/continuity-ledger.md), [webmcp.md](docs/webmcp.md), [WebMCP agent evaluations](docs/webmcp-evals.md), and [security.md](docs/security.md) for the exact data, authority, persistence, evaluation, and threat boundaries. The challenge rationale and implementation provenance are in [competition-positioning.md](docs/competition-positioning.md) and [preexisting-vs-pivot.md](docs/preexisting-vs-pivot.md).
+Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/continuity-ledger.md), [webmcp.md](docs/webmcp.md), [WebMCP agent evaluations](docs/webmcp-evals.md), and [security.md](docs/security.md) for the exact data, authority, persistence, evaluation, and threat boundaries. The challenge rationale and implementation provenance are in [competition-positioning.md](docs/competition-positioning.md) and [preexisting-vs-pivot.md](docs/preexisting-vs-pivot.md). The final [Devpost package](docs/devpost-submission.md), [judge quick start](docs/judge-quick-start.md), and [video script](docs/video-final.md) are copy/recording ready while the public YouTube URL remains a human action.
 
 ## Screenshots
+
+### Recovered evidence and conflicts
+
+![Four fictional recovered sources with visible phone, MOQ, Japan, and certification conflicts](docs/screenshots/recovered-evidence-conflicts.png)
 
 ### Agent proposal and human decision state
 
@@ -110,6 +116,10 @@ Read [architecture.md](docs/architecture.md), [continuity-ledger.md](docs/contin
 ### Published Business Passport
 
 ![Published Business Passport hero with representative-attested status and agent guidance](docs/screenshots/business-passport.png)
+
+### Prepared inquiry and exact-draft approval
+
+![Prepared fictional inquiry with human-edited quantity and approval-gated submit capability](docs/screenshots/prepared-inquiry-approval.png)
 
 The same release was verified at a 360-pixel viewport: [Continuity Ledger](docs/screenshots/continuity-ledger-mobile.png) and [Business Passport](docs/screenshots/business-passport-mobile.png).
 
@@ -136,7 +146,7 @@ The reset removes this device's StillHere demo Ledger, Passport versions, inquir
 
 ## Exact WebMCP test path
 
-Use ChatGPT's in-app browser, identified as WebMCP-capable by the [challenge FAQ](https://openai.com/webmcp-challenge/), or a compatible Chrome build:
+Use ChatGPT's in-app browser, identified as WebMCP-capable by the [challenge rules](https://webmcp.devpost.com/rules), or a compatible Chrome build:
 
 1. In Chrome, open `chrome://flags/#enable-webmcp-testing`, enable the flag, and relaunch as described in [Chrome's setup](https://developer.chrome.com/docs/ai/webmcp#get-started).
 2. Open `http://localhost:3000/assessment` and assess the prefilled fictional URL.
@@ -217,7 +227,7 @@ Do not enter real personal or commercial information in the public demo. See [se
 
 - **Live app:** [https://stillhere-azure.vercel.app](https://stillhere-azure.vercel.app)
 - **Source:** [https://github.com/wagaba26/stillhere](https://github.com/wagaba26/stillhere)
-- **Demo video:** `[add final video URL]`
+- **Demo video:** `[WAITING FOR FINAL PUBLIC YOUTUBE URL]`
 
 Other Node-compatible targets must support Next.js 16 App Router route handlers, the Node runtime used by the safe assessment fetcher, and static service-worker delivery.
 

@@ -184,7 +184,7 @@ sequenceDiagram
 
 ### Browser setup
 
-1. Use ChatGPT's in-app browser as described by the [OpenAI challenge page](https://openai.com/webmcp-challenge/), or enable `chrome://flags/#enable-webmcp-testing` in a compatible Chrome build and relaunch.
+1. Use ChatGPT's in-app browser as described by the [challenge rules](https://webmcp.devpost.com/rules), or enable `chrome://flags/#enable-webmcp-testing` in a compatible Chrome build and relaunch.
 2. Start the app with `npm run dev`.
 3. Use the two-step footer reset to clear earlier demo Ledger/Passport/draft/receipt state.
 
