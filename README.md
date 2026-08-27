@@ -2,7 +2,7 @@
 
 > The website may be outdated. The business isn't.
 
-StillHere is a business-continuity layer for the long tail of the web. It recovers conflicting source evidence, lets an agent stage bounded resolutions, leaves every authoritative decision to a human, and publishes accepted facts as a versioned Business Passport that people and browser agents can use together.
+StillHere is for active businesses whose official website no longer matches how they operate. It brings candidate facts from a legacy website, catalogues, recent public evidence, and a business representative into one Continuity Ledger. An agent organizes the conflicts; a person decides what is current; accepted facts become a versioned Business Passport that people and browser agents can use together.
 
 Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/).
 
@@ -11,6 +11,14 @@ Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/).
 - **Judge quick start:** [docs/judge-quick-start.md](docs/judge-quick-start.md)
 - **Demo video:** `[WAITING FOR FINAL PUBLIC YOUTUBE URL]`
 - **Demo account:** none
+
+## The idea in one example
+
+The fictional 2021 website says the trade phone is `+256 000 000 101`, the Instant Coffee minimum order is 5,000 units, and the product is “Organic certified.” A 2023 catalogue and 2026 evidence disagree. StillHere preserves those differences instead of silently choosing the newest-looking sentence.
+
+The agent stages cited proposals. The human accepts the current phone, edits the minimum order, keeps Japan qualified as **Available by inquiry**, and excludes the unsupported certification wording. Publishing creates a new Business Passport version containing those reviewed decisions. A later agent reads and searches that Passport instead of treating the old page as current truth.
+
+**WebMCP is the structured access layer, not the truth engine.** StillHere establishes what may be published; WebMCP lets an agent work with that approved state on the page.
 
 ## The problem
 
@@ -142,7 +150,7 @@ To start from a clean demo state, use the two-step footer control:
 1. Select **Reset demo**.
 2. Read the scope, then select **Confirm reset**.
 
-The reset removes this device's StillHere demo Ledger, Passport versions, inquiry draft, receipts, and legacy v1 attestation snapshot. It preserves Low Data and browser caches, then returns to `/assessment`.
+The reset removes this device's StillHere demo Ledger, Passport versions, inquiry draft, receipts, and legacy v1 attestation snapshot. It preserves the Simplified view preference and browser caches, then returns to `/assessment`.
 
 ## Exact WebMCP test path
 
@@ -164,9 +172,9 @@ Use ChatGPT's in-app browser, identified as WebMCP-capable by the [challenge rul
 10. Enter fictional buyer details, change quantity from 5,000 to 6,000, and check the approval control. Confirm `submit_approved_inquiry` appears.
 11. Clear approval or edit a field and confirm the tool is removed. Reapprove the exact draft, ask the agent to submit, and confirm the visible `SH-...` demo receipt.
 
-The complete recording script is in [docs/demo-script.md](docs/demo-script.md).
+The focused final recording script is in [docs/video-final.md](docs/video-final.md). [docs/demo-script.md](docs/demo-script.md) retains the full six-tool judge walkthrough for deeper evaluation.
 
-## Persistence, offline, and Low Data
+## Persistence, offline, and Simplified view
 
 The browser database is `stillhere-continuity`, schema version 2. It upgrades a version-1 database without deleting existing drafts or receipts, then adds `continuity` and `passportVersions`. Passport publication stores the new version and updates the Ledger's `publishedVersionId` in one IndexedDB transaction.
 
@@ -176,9 +184,9 @@ Profile loading is conservative:
 2. otherwise convert a strictly validated legacy `stillhere-demo-attestation-v1` snapshot into a compatibility Passport v1, omitting unreviewed Instant Coffee details;
 3. otherwise retain the safe deterministic Passport v1 baseline containing only already accepted facts.
 
-The service worker precaches `/recover`, `/business/rwenzori-harvest`, `/offline`, the manifest, and the icon. It uses network-first document navigation and cache-first previously seen Next.js static assets. Offline use requires a successful prior online visit and remains subject to browser storage eviction. `/recover` can restore the device Ledger and publish locally while offline; inquiry submission is never reported as successful offline and must be retried manually.
+The service worker makes a best-effort precache of `/recover`, `/business/rwenzori-harvest`, `/offline`, the manifest, and the icon. It uses network-first document navigation and cache-first previously seen Next.js static assets. After each target route has loaded successfully online, its cached document and previously fetched assets may allow offline use. Precache can be partial and browser storage can be evicted. `/recover` can restore the device Ledger and publish locally while offline; inquiry submission is never reported as successful offline and must be retried manually.
 
-Low Data is a global root preference. The Passport toggle writes it to `localStorage`; the root hydrator reapplies `html[data-low-data]` across routes. It hides selected decoration, simplifies layouts, and disables animation, transitions, and backdrop filtering. It does not unload bytes already transferred. The Data Footprint panel reports Resource Timing observations; zero may mean cached or unavailable detail, not a benchmark.
+Simplified view is a global root preference. The Passport toggle writes it to `localStorage`; the root hydrator reapplies `html[data-low-data]` across routes. It hides selected decoration, simplifies layouts, and disables animation, transitions, and backdrop filtering. It does not prevent requests or reduce bytes already transferred. The Data Footprint panel reports cumulative Resource Timing observations for that visit, not savings or a universal benchmark.
 
 ## Verification
 
@@ -204,7 +212,7 @@ Automated tests do not replace a WebMCP-capable browser pass, offline navigation
 - All Ledger, Passport, business, contact, product, and representative records are fictional seeded data.
 - Live assessment reads one bounded public HTML response and derives conservative signals; it does not crawl linked pages, execute JavaScript, verify a business, or feed arbitrary remote text into WebMCP definitions.
 - There are no accounts, representative authentication, KYC, registry checks, domain checks, or certification audits.
-- Ledger/Passport/draft/receipt state is device-local IndexedDB. The legacy compatibility snapshot and Low Data preference use `localStorage`.
+- Ledger/Passport/draft/receipt state is device-local IndexedDB. The legacy compatibility snapshot and Simplified view preference use `localStorage`.
 - Published Passport versions are immutable application snapshots on that device, not signed public credentials or server records.
 - The inquiry API stores keys and receipts in a process-local `Map`. It binds a key to a SHA-256 hash of the reviewed payload for same-process retries, but state resets on restart and is not shared across instances.
 - The inquiry route does not persist the Passport version or deliver externally. Its server validation uses a seeded fictional receipt authority aligned with the reconciled Instant Coffee currentness; Passport destination qualification and exact-version approval are enforced in the browser in this build.

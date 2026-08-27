@@ -1,12 +1,14 @@
-# Demo script (under three minutes)
+# Full six-tool judge walkthrough
+
+This companion walkthrough favors complete evaluator coverage over video brevity. Use the focused [final video package](video-final.md) for the under-three-minute submission recording.
 
 This script demonstrates all six route-scoped WebMCP tools while keeping every authority transition visible.
 
 ## Before recording
 
 1. Use the deployed HTTPS app or a WebMCP-enabled local Chrome build.
-2. In the footer, select **Reset demo**, then **Confirm reset**. This clears device demo Ledger/Passport/draft/receipts but preserves Low Data and caches.
-3. If Low Data was previously on, turn it off from the Passport route before recording; reset intentionally preserves the preference.
+2. In the footer, select **Reset demo**, then **Confirm reset**. This clears device demo Ledger/Passport/draft/receipts but preserves Simplified view and caches.
+3. If Simplified view was previously on, turn it off from the Passport route before recording; reset intentionally preserves the preference.
 4. Confirm `npm run check` passes. The polish snapshot is 14 test files and 86 tests.
 5. Use only the fictional buyer values below.
 
@@ -134,13 +136,13 @@ Say:
 
 > “This is a process-local demo acceptance only. It sends no email, order, payment, or external message.”
 
-## 2:28–2:50 — Low Data and offline honesty
+## Simplified view and offline honesty
 
-Toggle **Low Data** and show Data Footprint.
+Toggle **Simplified view** and show Data Footprint.
 
 Say:
 
-> “Low Data is a global stored preference. Resource Timing reports this visit; zero can mean cache or unavailable detail, and the toggle cannot unload bytes already transferred.”
+> “Simplified view is a global stored visual preference. It removes selected decoration and motion, but does not prevent requests. Resource Timing reports cumulative observations for this visit; zero can mean cache or unavailable detail.”
 
 If recording offline behavior, first load both `/recover` and the Passport online and wait for the service worker. Switch DevTools Network to offline:
 

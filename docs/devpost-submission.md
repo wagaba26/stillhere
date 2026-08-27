@@ -21,7 +21,7 @@ StillHere lets a browser agent organize conflicting business evidence and prepar
 
 ## Short description
 
-StillHere is a human-agent business continuity layer for organizations whose websites are no longer reliable sources of current information. Instead of making stale pages easier to automate, it recovers conflicting source evidence into a shared Continuity Ledger. WebMCP lets an agent inspect the bounded review state, stage cited proposals, search a published Business Passport, and prepare a visible buyer inquiry. A human alone can accept or edit claims, exclude unsupported certification wording, publish a Passport version, and approve the exact final draft. Six route-scoped tools operate on the same state shown in the UI, and the consequential submit tool exists only while the approved draft and Passport version still match. The public demo needs no account, uses fictional data, and includes Low Data, local persistence, and honest offline behavior.
+StillHere is a human-agent business continuity layer for organizations whose websites are no longer reliable sources of current information. Instead of making stale pages easier to automate, it recovers conflicting source evidence into a shared Continuity Ledger. WebMCP lets an agent inspect the bounded review state, stage cited proposals, search a published Business Passport, and prepare a visible buyer inquiry. A human alone can accept or edit claims, exclude unsupported certification wording, publish a Passport version, and approve the exact final draft. Six route-scoped tools operate on the same state shown in the UI, and the consequential submit tool exists only while the approved draft and Passport version still match. The public demo needs no account, uses fictional data, and includes a visual Simplified view, local persistence, and honest best-effort offline behavior.
 
 ## Full project description
 
@@ -57,7 +57,7 @@ Each registration is tied to an `AbortController` and disappears on route or aut
 
 ### Execution, resilience, and safety
 
-The public Next.js application is deployed on Vercel, needs no login, and uses a deterministic fictional scenario. IndexedDB retains Ledger, Passport versions, drafts, and receipts on the device. A service worker caches the Ledger and Passport shells after an online visit. Low Data is a persistent preference that simplifies decoration and motion; transfer values are reported honestly as visit-specific browser observations.
+The public Next.js application is deployed on Vercel, needs no login, and uses a deterministic fictional scenario. IndexedDB retains Ledger, Passport versions, drafts, and receipts on the device. A service worker makes a best-effort cache of the Ledger and Passport after an online visit; cached documents and previously fetched assets may allow degraded-network use, but precaching can be partial. Simplified view persistently removes selected decoration and motion. It does not reduce network requests, and transfer values are cumulative visit-specific browser observations rather than measured savings.
 
 Recovered text is evidence, never an instruction or tool definition. Unsupported certification remains out. No agent can auto-publish. Preparation never implies submission. The receipt is fictional and process-local: no email, order, payment, webhook, or external message is sent. StillHere demonstrates a careful human-agent authority pattern, not identity verification, KYC, a signed credential, or a production delivery system.
 

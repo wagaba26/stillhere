@@ -2,142 +2,139 @@
 
 ## Target runtime
 
-Aim for **2:42–2:48**. The official limit is strictly less than three minutes; do not target 2:59.
+Aim for **2:35–2:50**. The challenge limit is under three minutes, so leave a few seconds of export and platform margin.
 
-## Before recording
+## The one-sentence story
 
-- Use the final production URL in a WebMCP-capable browser.
-- Record at 1440×900 or 1920×1080, 100% browser zoom, with readable cursor size.
-- Hide bookmarks, personal tabs, extensions, notifications, accounts, email addresses, and operating-system popups.
-- Turn off Low Data before recording; the demo reset deliberately preserves that preference.
-- Use **Reset demo → Confirm reset**, then verify the Ledger starts at 4 sources, 3 conflicts, 1 unsupported claim, and 4 fields needing review.
-- Use only the fictional buyer values below.
-- Record clean narration or voice-over. Do not use copyrighted background music.
-- Keep the browser's WebMCP interaction visible enough that judges can connect the prompt, tool, and page change.
+StillHere keeps an outdated website as evidence, lets an agent organize conflicting claims, gives a person the final decision, and publishes a versioned Business Passport that agents can query instead of guessing from stale pages.
 
-## Shot-by-shot timeline and exact narration
+**WebMCP is the structured access layer, not the truth engine.**
 
-### 0:00–0:14 — Hook
+## Timeline and exact narration
 
-**Screen:** Home hero and five-stage sequence.
+### 0:00–0:14 — The problem
 
-**Narration:**
+**Screen:** Opening card, then the StillHere home page.
 
-> A business can stay active after its website becomes stale. But making an old page agent-readable does not make its claims true. StillHere recovers the evidence, lets an agent organize it, and keeps people in control of what becomes real.
+> “Rwenzori Harvest is still trading, but its 2021 website lists an old phone number, a five-thousand-unit minimum order, and an unsupported certification. An agent reading that page could give a confident, wrong answer.”
 
-Select **Try Demo**.
+### 0:14–0:34 — Evidence, not automatic truth
 
-### 0:14–0:32 — Assessment and recovered evidence
+**Screen:** Run the assessment, then show the evidence and conflict summary.
 
-**Screen:** Run the prefilled assessment; show stale website result and the recovered-evidence cards.
+> “The website is only one source. StillHere keeps it beside a later catalogue, recent public evidence, and a fictional business representative. These records disagree, so none is silently promoted to current truth.”
 
-**Narration:**
+### 0:34–0:53 — The Continuity Ledger
 
-> The assessment separates website condition from business condition. This fictional example recovers four records that disagree about contact details, order quantity, Japan availability, and a legacy certification claim.
+**Screen:** Open the Ledger and run `inspect_business_truth`.
 
-Select **Review recovered evidence**.
+> “On the Continuity Ledger, WebMCP gives the agent a bounded tool to inspect what needs review. It sees fields and source references—not raw pages turned into instructions.”
 
-### 0:32–1:07 — WebMCP inspection and proposals
+### 0:53–1:14 — Agent proposals remain proposals
 
-**Screen:** Ledger, WebMCP Ready, prompt guide, proposal arrival.
+**Screen:** Run `stage_claim_resolutions` and show the proposal cards.
 
-**Narration:**
+> “The agent can stage cited proposals: use the newer phone, preserve Japan as available by inquiry, and exclude the unsupported certification claim. These are visible proposals. The agent has approved and published nothing.”
 
-> On the Continuity Ledger, WebMCP exposes two route-scoped tools. The agent first inspects a bounded summary, then stages source-backed resolutions. Notice that all four results remain proposals. The agent accepted and published nothing.
+### 1:14–1:40 — Human authority
 
-Use prompts 1 and 2 below. Briefly show **Agent proposal · New**.
+**Screen:** Accept the phone, edit the minimum order from 2,500 to 3,000, accept the Japan qualification, and accept exclusion of the certification wording.
 
-### 1:07–1:35 — Human authority and publication
+> “The human supplies authority. I accept the current phone, edit the minimum order to three thousand, keep the Japan qualification, and exclude certification wording that is no longer supported. Unresolved facts stay out of the Draft Passport.”
 
-**Screen:** Accept phone; edit 2,500→3,000; accept Japan qualification; accept certification exclusion; publish.
+### 1:40–2:00 — Publish the Passport
 
-**Narration:**
+**Screen:** Publish, then show the newly versioned Passport.
 
-> Now the human supplies authority. I accept the phone, edit the minimum order to three thousand, preserve Japan as available by inquiry, and exclude unsupported certification wording. Only accepted facts enter the Draft Passport. Publication is a human action.
+> “Only the human can publish. StillHere creates a new versioned Business Passport containing accepted facts only. In this challenge build, that Passport is device-local; a production service would add authenticated, hosted publication.”
 
-Select **Publish Business Passport**.
+### 2:00–2:24 — The payoff
 
-### 1:35–1:58 — Published Passport and search
+**Screen:** Run `search_current_offerings` for a Japanese private-label buyer and show the returned result.
 
-**Screen:** Published v2 badge; run Passport search.
+> “Now the agent reads the published Passport, not the stale website. For a Japanese private-label buyer it returns Instant Coffee with a three-thousand-unit minimum and the exact qualification, available by inquiry. The source of the answer has changed.”
 
-**Narration:**
+### 2:24–2:35 — Safe next action
 
-> The public profile now reads the exact published Passport version. The agent searches accepted offerings, not the old website. Instant Coffee is eligible for a Japanese private-label inquiry, but the qualification stays available by inquiry—not guaranteed.
+**Screen:** Briefly show `prepare_business_inquiry`; do not submit.
 
-Use prompt 3 below.
+> “The same approved Passport can prepare a visible inquiry, but preparation never equals authorization. The full app provides six route-scoped tools; this video focuses on the core reconciliation path.”
 
-### 1:58–2:27 — Visible inquiry preparation and approval lifecycle
+### 2:35–2:48 — Resilience without overclaiming
 
-**Screen:** Run preparation prompt; fill buyer fields; edit quantity 5,000→6,000; approve; make one harmless edit to show removal; restore/reapprove.
+**Screen:** Show Simplified view, its diagnostic panel, and the offline page or a previously cached Passport response.
 
-**Narration:**
+> “StillHere also stores work locally. Simplified view removes selected decoration and motion, while previously visited Ledger and Passport pages have a best-effort offline cache. It does not claim first-load bandwidth savings.”
 
-> The agent prepares the normal visible form and leaves buyer identity for the human. Preparation cannot approve or submit. I enter fictional details, change the quantity, and approve the exact draft. The submit tool appears. One edit revokes approval and removes it, so I review and approve again.
+### 2:48–2:55 — Close
 
-Use prompt 4 below.
+**Screen:** Final card with the live app and repository links.
 
-### 2:27–2:40 — Fictional receipt
+> “StillHere helps agents organize what may be true, while people decide what becomes current.”
 
-**Screen:** Submit through agent and show `SH-...` receipt.
+## Exact WebMCP prompts
 
-**Narration:**
+Use these prompts as written so the video remains reproducible.
 
-> The approved tool returns a fictional demo receipt. No email, order, payment, webhook, or external message is sent.
+1. **Inspect**
 
-Use prompt 5 below.
+   `Inspect the Rwenzori Harvest continuity ledger. Summarize what still needs human review. Do not approve or publish anything.`
 
-### 2:40–2:47 — Close
+2. **Propose**
 
-**Screen:** Brief Low Data toggle, then StillHere/home URL.
+   `Stage cited proposals for Rwenzori Harvest: use the newer phone +256 312 555 826; set Instant Coffee minimum order to 2500; mark Japan as available by inquiry; exclude the unsupported organic-certification claim. Do not accept, publish, approve, or submit.`
 
-**Narration:**
+3. **Search the published Passport**
 
-> StillHere lets the agent organize the evidence, while the human decides what becomes truth and what becomes action.
+   `Using only the published Business Passport, find a current private-label Instant Coffee option for a buyer in Japan. Return the minimum order, the exact market qualification, and source references.`
 
-## Exact agent prompts
+4. **Prepare, do not submit**
 
-1. **Inspect:** “Inspect this business's recovered evidence and tell me what needs review.”
-2. **Propose:** “Propose source-backed resolutions for these conflicts, but do not accept or publish anything.”
-3. **Read/search:** “Read the published Business Passport and find current private-label offerings for Japan.”
-4. **Prepare:** “Prepare an inquiry for 5,000 units of Instant Coffee for Japan, requesting samples, private-label packaging and Japanese labelling support.”
-5. **Submit:** “Submit the exact inquiry I approved.”
+   `Prepare a visible inquiry for the Japanese private-label Instant Coffee option. Do not approve or submit it.`
 
-## Exact human actions
+## Human actions shown in the video
 
-1. Run prefilled assessment and open recovered evidence.
-2. Accept the phone proposal.
-3. Edit Instant Coffee MOQ from `2500` to `3000` and save.
-4. Accept Japan as `AVAILABLE_BY_INQUIRY`.
-5. Accept certification exclusion.
-6. Publish Passport.
-7. Enter `Kobe Coffee Trading`, `Aiko Mori`, and `aiko@example.com`.
-8. Change quantity `5000` to `6000`.
-9. Approve; make a harmless edit to demonstrate revocation; restore/reapprove.
-10. Ask the agent to submit and show the fictional receipt.
+1. Accept the proposed current phone.
+2. Edit the proposed minimum order from 2,500 to 3,000, then accept it.
+3. Accept the qualified Japan availability claim.
+4. Accept exclusion of the unsupported certification wording.
+5. Publish the Passport.
 
-## Editing notes
+These clicks are the central product point: the agent organizes evidence, while the person controls acceptance and publication.
 
-- Start on the product, not a title animation or slide deck.
-- Remove waits and mistaken clicks; use minimal cuts and no speed-up that makes text unreadable.
-- Add accurate English captions.
-- Let proposal arrival, human edit, dynamic submit appearance/removal, and receipt remain on screen long enough to understand.
-- End with the product thesis and `stillhere-azure.vercel.app`.
-- Watch the final export once with sound, once muted for captions, and once at 720p for legibility.
+## What the video intentionally omits
 
-## Suggested YouTube title
+To keep the story understandable and under three minutes, do not walk through every buyer field, revoke and re-approve a draft, submit an inquiry, or linger on the receipt. The app and the full judge walkthrough still demonstrate all six WebMCP tools and the approval-bound submission path.
 
-**StillHere — OpenAI WebMCP Challenge Demo**
+## Recording setup
 
-## Suggested YouTube description
+- 1920×1080, 16:9, browser zoom at 100%.
+- Use only the fictional Rwenzori Harvest scenario.
+- Hide bookmarks, personal tabs, notifications, tokens, and account details.
+- Use clean narration with no background music.
+- Burn in readable captions and include a separate `.srt` file.
+- Keep the cursor still unless it is showing a deliberate human decision.
+- End with the live app and public repository links long enough to read.
 
-> StillHere is a human-agent business continuity layer that reconciles conflicting web evidence into a human-approved, versioned Business Passport before an agent can act.
->
-> Live demo: https://stillhere-azure.vercel.app
->
-> Source: https://github.com/wagaba26/stillhere
-> Built for the OpenAI WebMCP Challenge. All business, buyer, source, and receipt data shown are fictional. No real message, order, payment, or external transaction is created.
+## YouTube metadata
 
-Upload to YouTube with visibility set to **Public**. Confirm the final runtime is below 3:00 and audio clearly explains what was built and how WebMCP is used.
+### Title
 
-Final URL: **[WAITING FOR FINAL PUBLIC YOUTUBE URL]**
+`StillHere — From a stale website to a human-approved Business Passport | WebMCP Challenge`
+
+### Description
+
+```text
+StillHere helps an active business recover from an outdated website without letting an AI agent decide what is true.
+
+The demo shows how WebMCP lets an agent inspect a bounded Continuity Ledger, stage cited proposals, query a human-published Business Passport, and prepare—but never silently submit—a buyer inquiry.
+
+Live app: https://stillhere-azure.vercel.app
+Source: https://github.com/wagaba26/stillhere
+
+The Rwenzori Harvest scenario and all business data shown are fictional. The challenge build stores its Ledger and Passport on the current device. Simplified view is a visual preference, and offline support is best-effort after an online visit.
+```
+
+### Visibility and final check
+
+Set the upload to **Public**, confirm the processed duration remains below three minutes, test the video in a signed-out browser, and replace the YouTube placeholder in the submission package with the public URL.

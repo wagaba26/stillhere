@@ -7,6 +7,8 @@
 **Login:** none
 **Expected time:** about two minutes; all data is fictional
 
+**Core idea:** The old website remains evidence. A human-approved Business Passport becomes the state that agents read through WebMCP.
+
 ## Browser
 
 Use ChatGPT's in-app browser, or Chrome 149+ with `chrome://flags/#enable-webmcp-testing` enabled and the browser restarted.
@@ -53,7 +55,7 @@ Use ChatGPT's in-app browser, or Chrome 149+ with `chrome://flags/#enable-webmcp
 
 ## Reset
 
-Use the footer's two-step **Reset demo → Confirm reset** control. It clears this origin's fictional Ledger, Passport versions, draft, and receipts while preserving Low Data and browser caches.
+Use the footer's two-step **Reset demo → Confirm reset** control. It clears this origin's fictional Ledger, Passport versions, draft, and receipts while preserving Simplified view and browser caches.
 
 ## Known challenge-demo limits
 
