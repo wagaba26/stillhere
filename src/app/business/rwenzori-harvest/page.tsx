@@ -4,7 +4,7 @@ import { ProfileExperience } from "./profile-experience";
 
 export const metadata: Metadata = {
   title: business.name,
-  description: `${business.description} Attested business information last confirmed 26 August 2026.`,
+  description: `${business.description} Fictional Business Passport demo with human-reviewed current offerings and an approval-gated WebMCP inquiry.`,
 };
 
 export default function BusinessProfilePage() {

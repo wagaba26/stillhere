@@ -5,8 +5,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "StillHere Business Continuity",
     short_name: "StillHere",
     description:
-      "Lightweight, attested business information for people and agents.",
-    start_url: "/business/rwenzori-harvest",
+      "Human-agent continuity for reconciling evidence into a versioned Business Passport.",
+    start_url: "/assessment",
     display: "standalone",
     background_color: "#f7f5ef",
     theme_color: "#173b2b",

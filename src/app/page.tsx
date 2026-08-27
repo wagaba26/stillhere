@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content">
+      <main id="main-content" tabIndex={-1}>
         <section className="hero shell">
           <div className="hero-copy">
             <p className="eyebrow">A continuity layer for active businesses</p>
@@ -19,8 +19,8 @@ export default function Home() {
               <Link className="button button-primary" href="/assessment">
                 Try Demo <span aria-hidden="true">→</span>
               </Link>
-              <Link className="button button-secondary" href="/assessment">
-                Check a business website
+              <Link className="button button-secondary" href="/business/rwenzori-harvest">
+                View Passport demo
               </Link>
             </div>
             <p className="microcopy">No account. Fictional demo data. Under three minutes.</p>
@@ -39,11 +39,11 @@ export default function Home() {
             <div className="recovery-arrow ledger-bridge" aria-hidden="true"><span>Continuity</span><strong>Ledger</strong></div>
             <article className="continuity-card">
               <p className="card-kicker">Business Passport</p>
-              <span className="active-pill">Representative attested</span>
+              <span className="active-pill">Human reviewed</span>
               <strong>Accepted facts only</strong>
               <p>Human-readable. Agent-ready. Unresolved claims stay out.</p>
               <div className="signal-row" aria-label="Profile properties">
-                <span>Representative attested</span><span>WebMCP</span><span>Low data</span>
+                <span>Human approved</span><span>WebMCP</span><span>Low data</span>
               </div>
             </article>
           </div>

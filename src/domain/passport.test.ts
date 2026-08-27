@@ -97,7 +97,7 @@ describe("Business Passport derivation", () => {
     const instant = passport.profile.products.find(
       (product) => product.id === "instant-coffee-100g",
     );
-    expect(passport.profile.phone).toBe("+256 780 240 826");
+    expect(passport.profile.phone).toBe("+256 000 000 826");
     expect(instant?.minimumQuantity).toBe(2500);
     expect(instant?.exportMarkets).not.toContain("Japan");
     expect(destinationStatusFor(passport, "instant-coffee-100g", "Japan")).toBe(

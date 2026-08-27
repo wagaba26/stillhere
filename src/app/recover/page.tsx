@@ -13,7 +13,7 @@ export default function RecoverPage() {
   return (
     <>
       <SiteHeader compact />
-      <main id="main-content" className="page-main">
+      <main id="main-content" className="page-main" tabIndex={-1}>
         <RecoveryWizard />
       </main>
       <SiteFooter />

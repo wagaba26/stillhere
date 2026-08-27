@@ -48,7 +48,7 @@ Then ask the agent to call `stage_claim_resolutions` with:
     {
       "field": "tradePhone",
       "action": "USE_VALUE",
-      "proposedValue": "+256 780 240 826",
+      "proposedValue": "+256 000 000 826",
       "supportingSourceIds": ["representative-2026", "public-evidence-2026"],
       "explanation": "Use the latest representative and public value."
     },

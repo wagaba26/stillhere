@@ -487,7 +487,7 @@ export function ProfileExperience() {
         </div>
       </header>
 
-      <main id="main-content">
+      <main id="main-content" tabIndex={-1}>
         <section className="business-hero shell">
           <div className="business-hero-copy">
             <p className="profile-category">Coffee producer &amp; exporter · Uganda</p>

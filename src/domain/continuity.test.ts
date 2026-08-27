@@ -83,7 +83,7 @@ describe("Continuity Ledger domain", () => {
     expect(() =>
       stageResolutionProposal(initialContinuityState, {
         ...recommendedResolutionProposals[0],
-        proposedValue: "+256 999 999 999",
+        proposedValue: "+256 000 000 999",
       }),
     ).toThrow("not present in a cited source");
   });
@@ -122,7 +122,7 @@ describe("Continuity Ledger domain", () => {
     );
 
     expect(latestHumanResolution(rejected, "tradePhone")?.acceptedValue).toBe(
-      "+256 780 240 826",
+      "+256 000 000 826",
     );
     expect(latestHumanResolution(rejected, "instantCoffeeMoq")?.state).toBe(
       "HUMAN_EDITED",
@@ -139,7 +139,7 @@ describe("Continuity Ledger domain", () => {
       new Date("2026-08-26T09:00:00.000Z"),
     );
     expect(latestHumanResolution(laterProposal, "tradePhone")?.acceptedValue).toBe(
-      "+256 780 240 826",
+      "+256 000 000 826",
     );
     expect(
       laterProposal.resolutions.filter(

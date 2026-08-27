@@ -63,8 +63,8 @@ const claim = (
 });
 
 export const continuityClaims: BusinessClaim[] = [
-  claim("legacy-phone", business.slug, "tradePhone", "+256 700 111 201", "legacy-website-2021", "2021-06-14", "CONFLICT"),
-  claim("catalogue-phone", business.slug, "tradePhone", "+256 700 222 202", "catalogue-2023", "2023-09-08", "CONFLICT"),
+  claim("legacy-phone", business.slug, "tradePhone", "+256 000 000 101", "legacy-website-2021", "2021-06-14", "CONFLICT"),
+  claim("catalogue-phone", business.slug, "tradePhone", "+256 000 000 202", "catalogue-2023", "2023-09-08", "CONFLICT"),
   claim("public-phone", business.slug, "tradePhone", business.phone, "public-evidence-2026", "2026-07-18", "PUBLIC_EVIDENCE"),
   claim("representative-phone", business.slug, "tradePhone", business.phone, "representative-2026", "2026-08-26", "OWNER_CONFIRMED"),
   claim("legacy-instant-moq", "instant-coffee-100g", "instantCoffeeMoq", 5000, "legacy-website-2021", "2021-06-14", "CONFLICT"),

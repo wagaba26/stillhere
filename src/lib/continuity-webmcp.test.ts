@@ -118,7 +118,7 @@ describe("Continuity Ledger WebMCP tools", () => {
       parseResolutionProposalInput(
         {
           proposals: [
-            { ...phone, proposedValue: "+256 999 999 999" },
+            { ...phone, proposedValue: "+256 000 000 999" },
           ],
         },
         initialContinuityState,

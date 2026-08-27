@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function OfflinePage() {
   return (
-    <main id="main-content" className="offline-page">
+    <main id="main-content" className="offline-page" tabIndex={-1}>
       <div className="offline-card">
         <span className="wordmark-mark" aria-hidden="true">S</span>
         <p className="eyebrow">Connection unavailable</p>

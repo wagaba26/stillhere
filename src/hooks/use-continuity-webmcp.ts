@@ -63,13 +63,18 @@ export function useContinuityWebMcp(options: UseContinuityWebMcpOptions) {
     });
 
     async function registerTools() {
+      if (!document.modelContext) {
+        setStatus("unsupported");
+        return;
+      }
+
       try {
         // Route-scoped direct WebMCP registration. Recovered source text never
         // controls these constant definitions, schemas, or tool names.
-        await document.modelContext!.registerTool(definitions.inspect, {
+        await document.modelContext.registerTool(definitions.inspect, {
           signal: controller.signal,
         });
-        await document.modelContext!.registerTool(definitions.stage, {
+        await document.modelContext.registerTool(definitions.stage, {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;

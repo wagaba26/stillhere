@@ -74,16 +74,21 @@ export function usePassportWebMcp(options: UsePassportWebMcpOptions) {
     });
 
     async function registerBaseTools() {
+      if (!document.modelContext) {
+        setStatus("unsupported");
+        return;
+      }
+
       try {
         // Direct WebMCP registration is intentionally visible. All three base
         // tools read the same hydrated Passport snapshot rendered on this page.
-        await document.modelContext!.registerTool(definitions.getPassport, {
+        await document.modelContext.registerTool(definitions.getPassport, {
           signal: controller.signal,
         });
-        await document.modelContext!.registerTool(definitions.search, {
+        await document.modelContext.registerTool(definitions.search, {
           signal: controller.signal,
         });
-        await document.modelContext!.registerTool(definitions.prepare, {
+        await document.modelContext.registerTool(definitions.prepare, {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;
@@ -165,9 +170,14 @@ export function usePassportWebMcp(options: UsePassportWebMcpOptions) {
     });
 
     async function registerSubmitTool() {
+      if (!document.modelContext) {
+        setSubmitToolAvailable(false);
+        return;
+      }
+
       try {
         // The consequential capability exists only for the exact approved draft.
-        await document.modelContext!.registerTool(definition, {
+        await document.modelContext.registerTool(definition, {
           signal: controller.signal,
         });
         if (controller.signal.aborted) return;

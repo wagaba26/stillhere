@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s · StillHere",
   },
   description:
-    "Recover what is still true, attest what is current, and publish a lightweight business continuity surface for humans and AI agents.",
+    "Recover conflicting business evidence, reconcile it through human review, and publish a versioned continuity surface for people and browser agents.",
   applicationName: "StillHere",
   manifest: "/manifest.webmanifest",
 };

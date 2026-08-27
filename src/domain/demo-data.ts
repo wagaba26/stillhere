@@ -12,7 +12,7 @@ export const business: BusinessProfile = {
   status: "ACTIVE",
   lastAttested: "2026-08-26",
   email: "trade@rwenzoriharvest.example",
-  phone: "+256 780 240 826",
+  phone: "+256 000 000 826",
   capabilities: {
     b2bInquiries: true,
     exports: true,
@@ -122,7 +122,7 @@ export const assessment = {
 
 export const legacyContacts = [
   {
-    value: "+256 700 111 201",
+    value: "+256 000 000 101",
     label: "Phone listed on legacy website",
     evidenceState: "CONFLICT" as const,
   },

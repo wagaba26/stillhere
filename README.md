@@ -143,7 +143,7 @@ Use ChatGPT's in-app browser, identified as WebMCP-capable by the [challenge FAQ
 3. Select **Review recovered evidence** to open `/recover`.
 4. Confirm **WebMCP Ready**. Use the visible copy-prompt guide to ask: **“Inspect this business's recovered evidence and tell me what needs review.”** Expect `inspect_business_truth`.
 5. Ask the agent to call `stage_claim_resolutions` with these source-backed proposals:
-   - `tradePhone`: `USE_VALUE`, `+256 780 240 826`, sources `representative-2026` and `public-evidence-2026`;
+   - `tradePhone`: `USE_VALUE`, `+256 000 000 826`, sources `representative-2026` and `public-evidence-2026`;
    - `instantCoffeeMoq`: `USE_VALUE`, `2500`, source `representative-2026`;
    - `japanAvailability`: `USE_VALUE`, `AVAILABLE_BY_INQUIRY`, source `representative-2026`;
    - `certification`: `EXCLUDE`, sources `legacy-website-2021` and `representative-2026`.

@@ -57,7 +57,7 @@ describe("Business Passport WebMCP tools", () => {
       version: 2,
       businessId: "rwenzori-harvest",
       name: "Rwenzori Harvest Coffee Ltd",
-      contact: { phone: "+256 780 240 826" },
+      contact: { phone: "+256 000 000 826" },
     });
     expect((result as { offerings: unknown[] }).offerings).toHaveLength(5);
     await expect(
