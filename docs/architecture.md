@@ -30,9 +30,9 @@ The public-URL assessment and the seeded continuity demo are deliberately separa
 | Passport domain | `src/domain/passport.ts` | Accepted-facts-only projection, destination qualification, search, v1 compatibility conversion, and version creation |
 | Ledger UI/WebMCP | `src/app/recover/recovery-wizard.tsx`, `src/components/agent-demo-guide.tsx`, `src/hooks/use-continuity-webmcp.ts`, `src/lib/continuity-webmcp.ts` | Agent-first instruction surface, compact evidence, visible proposal/decision queue, Draft Passport, two hydrated route tools, and human publication |
 | Passport UI/WebMCP | `src/app/business/rwenzori-harvest/profile-experience.tsx`, `src/components/agent-demo-guide.tsx`, `src/hooks/use-webmcp.ts`, `src/lib/passport-webmcp.ts` | Published-version identity, copyable agent prompts, catalogue, visible inquiry, three base tools, fingerprinted approval, and conditional submit |
-| Persistence | `src/lib/indexed-db.ts`, `src/lib/preferences.ts` | IndexedDB v2 Ledger/Passport/draft/receipt state plus Low Data and legacy-attestation compatibility keys |
-| Offline/global preferences | `public/sw.js`, `src/components/service-worker-registration.tsx`, `src/components/preference-hydrator.tsx` | Shell caching, navigation fallback, static-asset caching, and root Low Data hydration |
-| Scoped demo reset | `src/components/demo-reset-control.tsx` | Two-step deletion of demo device state while preserving Low Data and browser caches |
+| Persistence | `src/lib/indexed-db.ts`, `src/lib/preferences.ts` | IndexedDB v2 Ledger/Passport/draft/receipt state plus Simplified view and legacy-attestation compatibility keys |
+| Offline/global preferences | `public/sw.js`, `src/components/service-worker-registration.tsx`, `src/components/preference-hydrator.tsx` | Best-effort shell caching, navigation fallback, static-asset caching, and root Simplified view hydration |
+| Scoped demo reset | `src/components/demo-reset-control.tsx` | Two-step deletion of demo device state while preserving Simplified view and browser caches |
 | Demo receipt API | `src/app/api/inquiries/route.ts` | Seeded fictional receipt authority aligned with reconciled Instant Coffee currentness, payload-bound process-local idempotency, and fictional response |
 
 ## Route map
@@ -154,7 +154,7 @@ Each route feature-detects `document.modelContext.registerTool` and waits for lo
 
 See [webmcp.md](webmcp.md) for schemas, validation, and exact tests.
 
-## Offline and global Low Data
+## Offline and global Simplified view
 
 Service Worker v2 precaches:
 
@@ -164,11 +164,11 @@ Service Worker v2 precaches:
 - `/manifest.webmanifest`;
 - `/icon.svg`.
 
-Document navigations are network-first with per-route cached fallback. Previously fetched `/_next/static/` assets are cache-first. API, cross-origin, non-GET, RSC, and router-prefetch requests are excluded. `Promise.allSettled` allows install to continue if one precache item fails, so an active worker is not proof that every resource is cached. The Passport UI explicitly checks whether its route response is present before showing profile availability.
+Document navigations are network-first with per-route cached fallback. Previously fetched `/_next/static/` assets are cache-first. API, cross-origin, non-GET, RSC, and router-prefetch requests are excluded. `Promise.allSettled` allows install to continue if one precache item fails, so an active worker is not proof that every resource is cached. The Passport UI explicitly checks whether its route response is present and reports only that a cached response was detected.
 
 The cached `/recover` shell can restore the Ledger from IndexedDB and publish a Passport locally after a prior successful online load. There is no Background Sync, and inquiry submission remains pending offline.
 
-`PreferenceHydrator` runs in the root layout and applies the stored Low Data value to `html[data-low-data]` across routes. The visible toggle is on the Passport route. The preference hides selected decoration, simplifies layouts, and disables CSS motion/filter effects; it does not unload previously transferred resources.
+`PreferenceHydrator` runs in the root layout and applies the stored Simplified view value to `html[data-low-data]` across routes. The visible toggle is on the Passport route. The preference hides selected decoration, simplifies layouts, and disables CSS motion/filter effects. It does not suppress requests or reduce bytes already transferred; Resource Timing is cumulative for the visit and is not a savings measurement.
 
 ## Scoped two-step reset
 
@@ -179,7 +179,7 @@ The footer reset requires **Reset demo** followed by **Confirm reset**. Its Inde
 - the Rwenzori Harvest Continuity Ledger;
 - only Passport versions whose `businessId` is `rwenzori-harvest`.
 
-It then removes the legacy attestation compatibility key and navigates to `/assessment`. Low Data and Cache Storage are intentionally preserved. This is not a general origin-data wipe or server-state reset.
+It then removes the legacy attestation compatibility key and navigates to `/assessment`. Simplified view and Cache Storage are intentionally preserved. This is not a general origin-data wipe or server-state reset.
 
 ## API boundaries
 

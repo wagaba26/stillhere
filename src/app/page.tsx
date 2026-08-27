@@ -43,7 +43,7 @@ export default function Home() {
               <strong>Accepted facts only</strong>
               <p>Human-readable. Agent-ready. Unresolved claims stay out.</p>
               <div className="signal-row" aria-label="Profile properties">
-                <span>Human approved</span><span>WebMCP</span><span>Low data</span>
+                <span>Human approved</span><span>WebMCP</span><span>Best-effort offline</span>
               </div>
             </article>
           </div>

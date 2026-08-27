@@ -478,10 +478,10 @@ export function ProfileExperience() {
           </Link>
           <div className="profile-controls">
             <span className={`connection-status ${online ? "online" : "offline"}`}>
-              <span aria-hidden="true" />{online ? "Online" : offlineProfileAvailable ? "Offline — profile available" : "Offline"}
+              <span aria-hidden="true" />{online ? "Online" : offlineProfileAvailable ? "Offline — cached response detected" : "Offline"}
             </span>
-            <button className={`low-data-toggle ${lowData ? "enabled" : ""}`} type="button" onClick={toggleLowData} aria-pressed={lowData}>
-              <span className="toggle-track" aria-hidden="true"><i /></span>Low Data
+            <button className={`low-data-toggle ${lowData ? "enabled" : ""}`} type="button" onClick={toggleLowData} aria-pressed={lowData} aria-label="Toggle simplified view">
+              <span className="toggle-track" aria-hidden="true"><i /></span>Simplified view
             </button>
           </div>
         </div>
@@ -608,8 +608,8 @@ export function ProfileExperience() {
           <aside className="profile-sidebar" aria-label="Continuity profile diagnostics">
             <section className="sidebar-card footprint-card">
               <div className="sidebar-heading"><div><p className="eyebrow">Observed in this browser</p><h2>Data Footprint</h2></div><span className="leaf-mark" aria-hidden="true">↓</span></div>
-              <dl><div><dt>Transferred resources</dt><dd>{measurement.resources}</dd></div><div><dt>Observed transfer</dt><dd>{formatBytes(measurement.transferredBytes)}</dd></div><div><dt>Low-data mode</dt><dd>{lowData ? "On" : "Off"}</dd></div><div><dt>Cached / offline</dt><dd>{offlineProfileAvailable ? "Profile shell cached" : "Preparing"}</dd></div><div><dt>Draft state</dt><dd>{submissionState === "SUBMITTED" ? "Submitted" : draftPersistence === "saved" ? "Saved locally" : draftPersistence === "error" ? "Local save failed" : "Saving locally"}</dd></div></dl>
-              <p className="measurement-note">Transfer values come from the browser Resource Timing API for this visit. A zero value can mean a cached resource or unavailable transfer detail; it is not an invented benchmark.</p>
+              <dl><div><dt>Transferred resources</dt><dd>{measurement.resources}</dd></div><div><dt>Observed transfer</dt><dd>{formatBytes(measurement.transferredBytes)}</dd></div><div><dt>Simplified view</dt><dd>{lowData ? "On" : "Off"}</dd></div><div><dt>Cached / offline</dt><dd>{offlineProfileAvailable ? "Cached response detected" : "Preparing"}</dd></div><div><dt>Draft state</dt><dd>{submissionState === "SUBMITTED" ? "Submitted" : draftPersistence === "saved" ? "Saved locally" : draftPersistence === "error" ? "Local save failed" : "Saving locally"}</dd></div></dl>
+              <p className="measurement-note">Simplified view removes selected decoration and motion; it does not prevent network requests. Transfer values are cumulative Resource Timing observations for this visit, not measured savings.</p>
             </section>
 
             <details className="sidebar-card activity-card" open>

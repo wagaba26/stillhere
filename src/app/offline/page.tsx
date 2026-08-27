@@ -13,7 +13,7 @@ export default function OfflinePage() {
           successful network response.
         </p>
         <Link className="button button-primary" href="/business/rwenzori-harvest">
-          Open cached demo profile
+          Try cached demo profile
         </Link>
       </div>
     </main>

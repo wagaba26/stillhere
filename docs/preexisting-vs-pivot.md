@@ -8,7 +8,7 @@ StillHere began as a functioning WebMCP challenge application. The pivot is addi
 - SSRF-resistant `safe-site-fetch` controls for protocol, credentials, ports, DNS/IP ranges, redirects, timeout, content type, encoding, and response size.
 - A six-step information-attestation wizard on `/recover`.
 - A public Rwenzori Harvest profile and B2B inquiry form.
-- Low Data preference and resource-footprint display.
+- The original visual preference, previously labeled Low Data, and its resource-footprint display.
 - Production service-worker registration, cached profile/offline shell, and honest offline submission state.
 - IndexedDB inquiry drafts and device-local receipt persistence.
 - Direct `document.modelContext.registerTool(...)` integration with AbortController cleanup.
@@ -33,7 +33,7 @@ StillHere began as a functioning WebMCP challenge application. The pivot is addi
 - `AVAILABLE_BY_INQUIRY` destination qualification for Instant Coffee in Japan.
 - Two recovery WebMCP tools and the renamed `get_business_passport`, producing six purposeful tools across the two routes.
 - Exact-draft/Passport-version approval fingerprint and stale-executor rejection.
-- Scoped two-step demo reset, global Low Data hydration, cached `/recover`, and stricter service-worker exclusions.
+- Scoped two-step demo reset, global Simplified view hydration, cached `/recover`, and stricter service-worker exclusions.
 - Expanded migration, reset, human-authority, Passport, search, preparation, and WebMCP tests.
 
 ## Preserved by design

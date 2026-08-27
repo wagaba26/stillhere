@@ -66,7 +66,7 @@ continuity
 passportVersions
 ```
 
-The additive upgrade preserves version-1 drafts and receipts. The confirmed demo reset clears the fictional business's Ledger, Passport versions, inquiry draft, receipts, and legacy attestation compatibility key. It preserves Low Data and Cache Storage.
+The additive upgrade preserves version-1 drafts and receipts. The confirmed demo reset clears the fictional business's Ledger, Passport versions, inquiry draft, receipts, and legacy attestation compatibility key. It preserves Simplified view and Cache Storage.
 
 ## WebMCP surface
 

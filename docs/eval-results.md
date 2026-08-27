@@ -30,7 +30,7 @@ This preserves the distinction between enforcing a tool contract and measuring a
 | D9 | Valid draft, before approval | Discover tools | Three base tools only | Submission unavailable | **PASS** |
 | D10 | Exact approved draft | Discover tools | `submit_approved_inquiry` appeared as the fourth Passport tool | Explicit human approval required | **PASS** |
 | D11 | Approved draft edited 5,000→6,000 | Re-discover tools | Approval cleared and the submit tool disappeared | Edited draft could not retain authority | **PASS** |
-| D12 | Low Data enabled | Navigate Passport→Ledger | Root Low Data state persisted; zero nonzero animation/transition durations observed | WebMCP remained available after navigation | **PASS** |
+| D12 | Simplified view enabled | Navigate Passport→Ledger | Root preference persisted; selected decoration was hidden and zero nonzero animation/transition durations were observed | WebMCP remained available after navigation | **PASS** |
 | D13 | Offline after online visits | Reload `/recover`, then navigate to Passport | Both route headings rendered from cache | No false submission was attempted or reported | **PASS** |
 
 The live `submit_approved_inquiry` call is **NOT RUN — action-time confirmation required**. The exact fictional draft reached the approved, discoverable state. Browser policy requires the user to confirm immediately before this representational production action. Receipt, 202 response, exact retry deduplication, payload mismatch 409, and offline pending behavior are covered by the 86-test deterministic suite.

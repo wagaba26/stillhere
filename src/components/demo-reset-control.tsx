@@ -45,7 +45,7 @@ export function DemoResetControl() {
           </div>
         </div>
       )}
-      <small>Low Data and browser caches are preserved.</small>
+      <small>Simplified view and browser caches are preserved.</small>
       {error && <p role="alert">{error}</p>}
     </div>
   );

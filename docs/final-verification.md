@@ -53,8 +53,8 @@ Executed in the WebMCP-capable in-app browser against the public production rele
 | Approval lifecycle | **PASS** | No submit tool before approval; tool appeared after exact approval; editing 5,000→6,000 revoked approval and removed the tool. |
 | Live final submission | **NOT RUN — ACTION-TIME CONFIRMATION REQUIRED** | The exact fictional draft reached the ready-to-submit state. Browser safety requires a fresh confirmation immediately before the representational submit action. Automated receipt/idempotency behavior passed in the test suite. |
 | Offline | **PASS** | After an online visit, `/recover` and the Passport route rendered from the cache under offline network emulation. |
-| Low Data | **PASS** | Root state persisted across routes; observed animations/transitions were zero while enabled. |
-| Reduced motion | **PASS** | With Low Data off, `prefers-reduced-motion: reduce` matched; animation and transition durations were zero; scroll behavior was `auto`. |
+| Simplified view | **PASS** | Root state persisted across routes; selected decoration was hidden and observed animations/transitions were zero while enabled. This is a visual preference, not a network-savings measurement. |
+| Reduced motion | **PASS** | With Simplified view off, `prefers-reduced-motion: reduce` matched; animation and transition durations were zero; scroll behavior was `auto`. |
 | Responsive | **PASS** | No horizontal overflow at 360 or 768 px on home, Ledger, and Passport; the 390 px Passport and Ledger captures also had no overflow. |
 | Keyboard/focus | **PASS after QA fix** | Focus ring is visible, every route's `main` has `tabIndex={-1}`, and direct `#main-content` fragment navigation focused `<main>` and scrolled to it in production. The browser-control layer did not reliably synthesize native Enter activation, so no stronger automation claim is made. |
 | Reset | **PARTIAL LIVE + AUTOMATED PASS** | Production two-step warning and cancellation verified without deletion. Scoped deletion is covered by automated tests; live deletion was not executed because it would delete browser data. |

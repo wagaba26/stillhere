@@ -19,8 +19,8 @@ Checked items have current evidence. Unchecked items still require a final deplo
 - [ ] Production reset deletion executed — deliberately not run; automated scoped-reset tests pass
 - [x] 360, 390, and 768 px layouts have no horizontal overflow
 - [x] Cached Ledger and Passport routes work offline after an online visit
-- [x] Low Data persistence checked
-- [x] Reduced motion checked independently of Low Data
+- [x] Simplified view persistence checked
+- [x] Reduced motion checked independently of Simplified view
 - [x] Skip-link focus-target defect fixed
 - [x] Final production recheck of polished code commit `a6af4ca` and deployment `dpl_5VofBNFJyL21x8oDn4krSzsEmFtT`
 

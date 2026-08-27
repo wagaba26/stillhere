@@ -8,7 +8,7 @@ import {
 } from "./preferences";
 
 describe("local preferences and approval lifecycle", () => {
-  it("stores and restores the low-data preference", () => {
+  it("stores and restores the Simplified view preference", () => {
     const values = new Map<string, string>();
     const storage = {
       getItem: (key: string) => values.get(key) ?? null,
@@ -26,7 +26,7 @@ describe("local preferences and approval lifecycle", () => {
     expect(canOfferSubmitTool(true, false)).toBe(false);
   });
 
-  it("clears only the compatibility attestation and preserves Low Data", () => {
+  it("clears only the compatibility attestation and preserves Simplified view", () => {
     const values = new Map<string, string>([
       ["stillhere-low-data", "true"],
       ["stillhere-demo-attestation-v1", "{}"],

@@ -87,7 +87,7 @@ Browser mediation and exact-state checks are useful UX controls, not authenticat
 
 Database `stillhere-continuity` version 2 contains `drafts`, `submissions`, `continuity`, and `passportVersions`. The upgrade adds new stores without deleting v1 draft/receipt records. A blocked upgrade fails visibly.
 
-The footer reset is intentionally two-step. Its IndexedDB transaction deletes the named demo draft, demo receipt store, Rwenzori Harvest Ledger, and only that business's Passport versions. It then removes the legacy attestation key. It preserves Low Data and Cache Storage and does not affect process-local API state. It is not equivalent to clearing all origin data.
+The footer reset is intentionally two-step. Its IndexedDB transaction deletes the named demo draft, demo receipt store, Rwenzori Harvest Ledger, and only that business's Passport versions. It then removes the legacy attestation key. It preserves Simplified view and Cache Storage and does not affect process-local API state. It is not equivalent to clearing all origin data.
 
 ## Inquiry data and idempotency
 
@@ -122,13 +122,13 @@ Offline or network/API failure saves the draft and shows `SUBMISSION PENDING`. T
 
 Use only fictional buyer data in the public demo.
 
-## Service worker and Low Data
+## Service worker and Simplified view
 
 The service worker registers on HTTPS or localhost. It excludes API, cross-origin, non-GET, RSC, and prefetch requests. It never caches API submissions.
 
 It precaches `/recover`, the Passport, `/offline`, manifest, and icon with `Promise.allSettled`; a successful worker install does not prove every item was cached. Documents are network-first with cached route fallback. Previously fetched Next static assets are cache-first. Cached content and IndexedDB are not confidential storage and can be evicted or cleared.
 
-The root preference hydrator applies Low Data across routes. The preference is localStorage, not a privacy consent control. The UI's Resource Timing values can be absent/cached and must not be treated as a security or performance guarantee.
+The root preference hydrator applies Simplified view across routes. The preference is localStorage, not a privacy consent control or request-blocking mechanism. It removes selected decoration and motion only. The UI's cumulative Resource Timing values can be absent or cached and must not be treated as measured savings, a security property, or a performance guarantee.
 
 ## Response headers
 
