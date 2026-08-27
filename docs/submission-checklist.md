@@ -1,6 +1,6 @@
 # Submission checklist
 
-Checked items have current evidence. Unchecked items still require a final deployment recheck, user action, or the public video URL.
+Checked items have current evidence. Unchecked application actions were deliberately not exercised against the fictional production workflow and are not challenge-submission blockers.
 
 ## Application
 
@@ -57,9 +57,10 @@ Checked items have current evidence. Unchecked items still require a final deplo
 - [x] Public YouTube URL supplied
 - [x] Screenshot set and captions prepared
 - [x] Concise testing instructions prepared
-- [ ] Logged-in form-only fields reviewed
-- [ ] Entrant eligibility, ownership, and third-party authorization confirmed by entrant
-- [ ] Devpost submission reviewed and submitted before 3 September 2026 at 1:00 PM PDT / 11:00 PM EAT
+- [x] Logged-in form-only fields reviewed and completed
+- [x] Entrant confirmed eligibility and agreement to the Official Rules and Devpost Terms before registration and final submission
+- [x] Devpost submission reviewed and submitted on 27 August 2026
+- [x] Public Devpost entry verified at `https://devpost.com/software/stillhere-guxdjz`
 
 ## Video
 
@@ -77,9 +78,9 @@ Checked items have current evidence. Unchecked items still require a final deplo
 
 ## Freeze
 
-- [ ] Final submission commit recorded
-- [ ] Exact production deployment recorded
+- [x] Submitted application commit `ef9ef913a09c6b787eb371d0c5a538cf1a5c4c86` recorded
+- [x] Exact successful production deployment `6116528284` recorded
 - [x] Public YouTube URL recorded
-- [ ] Devpost submitted before deadline
-- [ ] Submitted repository branch, production deployment, and Devpost entry frozen
-- [ ] Separate branch/fork/deployment chosen for any post-submission work
+- [x] Devpost submitted before deadline
+- [x] Submitted repository branch, production deployment, and Devpost entry frozen
+- [x] Any post-submission development is directed to a separate branch/fork/deployment by the freeze policy

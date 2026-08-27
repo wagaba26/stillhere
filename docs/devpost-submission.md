@@ -125,6 +125,9 @@ Reset is in the footer and requires **Reset demo → Confirm reset**.
 ## Submission links
 
 ```text
+Devpost project:
+https://devpost.com/software/stillhere-guxdjz
+
 Live URL:
 https://stillhere-azure.vercel.app
 
